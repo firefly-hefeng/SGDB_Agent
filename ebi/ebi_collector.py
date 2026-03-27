@@ -1,0 +1,959 @@
+#!/usr/bin/env python3
+"""
+ArrayExpress Human scRNA-seq Raw Data Collector v2.1
+
+Collects raw metadata from three EBI public sources and saves as-is:
+
+  collected_data/
+    raw_biostudies/{accession}.json   – BioStudies study detail (full API response)
+    raw_ena/{accession}.json          – ENA data: read_run, read_experiment, analysis, sample, study
+    raw_biosamples/{accession}.json   – BioSamples record (full API response)
+    raw_scea.json                     – Single Cell Expression Atlas catalog
+    collected_accessions.json         – Master accession list
+    progress.json                     – Resume checkpoint
+    collector.log                     – Log file
+
+No transformation or standardisation is performed.
+Supports interrupt / resume via progress.json.
+
+Usage:
+    python arrayexpress_collector.py
+"""
+
+import requests
+import json
+import os
+import time
+import logging
+import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm import tqdm
+
+
+
+# =============================================================================
+# ENA Complete Field Definitions
+# =============================================================================
+
+ENA_READ_RUN_FIELDS = [
+    # Accession IDs
+    'run_accession', 'sample_accession', 'experiment_accession', 'study_accession',
+    # Sample info
+    'scientific_name', 'tax_id',
+    # Library info
+    'library_name', 'library_strategy', 'library_source', 'library_selection',
+    # Sequencing info
+    'instrument_platform', 'instrument_model',
+    # Statistics
+    'read_count', 'base_count',
+    # Institution
+    'center_name', 'first_public',
+    # File URLs - FASTQ
+    'fastq_ftp', 'fastq_aspera', 'fastq_galaxy', 'fastq_bytes', 'fastq_md5',
+    # File URLs - BAM
+    'bam_ftp', 'bam_aspera', 'bam_galaxy', 'bam_bytes', 'bam_md5',
+    # File URLs - SRA
+    'sra_ftp', 'sra_aspera', 'sra_galaxy', 'sra_bytes', 'sra_md5',
+    # File URLs - Submitted
+    'submitted_ftp', 'submitted_aspera', 'submitted_galaxy', 'submitted_bytes', 'submitted_md5',
+    # Biological metadata
+    'cell_line', 'cell_type', 'dev_stage', 'tissue_type', 'tissue_lib',
+    'sex', 'disease', 'strain', 'collection_date',
+    'environmental_sample', 'isolation_source', 'location', 'lat', 'lon',
+]
+
+ENA_READ_EXPERIMENT_FIELDS = [
+    'experiment_accession', 'run_accession', 'sample_accession', 'study_accession',
+    'scientific_name', 'tax_id',
+    'library_name', 'library_strategy', 'library_source', 'library_selection', 
+    'library_layout', 'library_construction_protocol',
+    'instrument_platform', 'instrument_model',
+    'center_name', 'first_public', 'study_title', 'description'
+]
+
+ENA_SAMPLE_FIELDS = [
+    'sample_accession', 'study_accession',
+    'scientific_name', 'tax_id',
+    'center_name', 'first_public',
+    'cell_line', 'cell_type', 'dev_stage', 'tissue_type',
+    'sex', 'disease', 'strain', 'collection_date',
+    'environmental_sample', 'isolation_source', 'location', 'lat', 'lon',
+    'description'
+]
+
+ENA_STUDY_FIELDS = [
+    'study_accession', 'study_title', 'study_description',
+    'center_name', 'first_public', 'last_updated'
+]
+
+# =============================================================================
+# API Endpoints
+# =============================================================================
+BIOSTUDIES_SEARCH = "https://www.ebi.ac.uk/biostudies/api/v1/search"
+BIOSTUDIES_DETAILS = "https://www.ebi.ac.uk/biostudies/api/v1/studies"
+SCEA_EXPERIMENTS = "https://www.ebi.ac.uk/gxa/sc/json/experiments"
+ENA_FILEREPORT = "https://www.ebi.ac.uk/ena/portal/api/filereport"
+ENA_SEARCH = "https://www.ebi.ac.uk/ena/portal/api/search"
+ENA_RETURN_FIELDS = "https://www.ebi.ac.uk/ena/portal/api/returnFields"
+BIOSAMPLES_BASE = "https://www.ebi.ac.uk/biosamples/samples"
+
+
+# =============================================================================
+# Configuration
+# =============================================================================
+OUTPUT_DIR = "collected_data"
+TIMEOUT = 60
+MAX_RETRIES = 3
+DELAY = 0.5            # seconds between different accessions
+DELAY_INTRA = 0.25     # seconds between sub-queries within one accession
+PAGE_SIZE = 100
+BIOSAMPLES_WORKERS = 5  # concurrent threads for BioSamples
+SAVE_INTERVAL = 5       # save progress every N items
+
+
+# =============================================================================
+# Search strategies: (label, query)
+# Comprehensive coverage of human single-cell RNA-seq in ArrayExpress.
+# Overlap between strategies is expected and handled by deduplication.
+# =============================================================================
+SEARCH_STRATEGIES = [
+    # ── Core single-cell RNA-seq terms ──
+    ("single cell",
+     'organism:"Homo sapiens" AND "single cell" AND accession:E-*'),
+    ("single-cell",
+     'organism:"Homo sapiens" AND "single-cell" AND accession:E-*'),
+    ("scRNA-seq",
+     'organism:"Homo sapiens" AND "scRNA-seq" AND accession:E-*'),
+    ("scRNAseq",
+     'organism:"Homo sapiens" AND "scRNAseq" AND accession:E-*'),
+    ("scRNA",
+     'organism:"Homo sapiens" AND "scRNA" AND accession:E-*'),
+    ("single cell RNA-seq",
+     'organism:"Homo sapiens" AND "single cell RNA-seq" AND accession:E-*'),
+    ("single-cell RNA-seq",
+     'organism:"Homo sapiens" AND "single-cell RNA-seq" AND accession:E-*'),
+    ("single cell RNA sequencing",
+     'organism:"Homo sapiens" AND "single cell RNA sequencing" AND accession:E-*'),
+    ("sc transcriptome",
+     'organism:"Homo sapiens" AND "single cell transcriptom" AND accession:E-*'),
+    ("sc gene expression",
+     'organism:"Homo sapiens" AND "single cell gene expression" AND accession:E-*'),
+    ("sc sequencing",
+     'organism:"Homo sapiens" AND "single cell sequencing" AND accession:E-*'),
+    ("sc profiling",
+     'organism:"Homo sapiens" AND "single cell profiling" AND accession:E-*'),
+
+    # ── Single-nucleus ──
+    ("single nucleus",
+     'organism:"Homo sapiens" AND "single nucleus" AND accession:E-*'),
+    ("single-nucleus",
+     'organism:"Homo sapiens" AND "single-nucleus" AND accession:E-*'),
+    ("snRNA-seq",
+     'organism:"Homo sapiens" AND "snRNA-seq" AND accession:E-*'),
+    ("snRNAseq",
+     'organism:"Homo sapiens" AND "snRNAseq" AND accession:E-*'),
+    ("sNuc-seq",
+     'organism:"Homo sapiens" AND "sNuc-seq" AND accession:E-*'),
+    ("single nucleus RNA",
+     'organism:"Homo sapiens" AND "single nucleus RNA" AND accession:E-*'),
+
+    # ── Technology-specific ──
+    ("10x Genomics",
+     'organism:"Homo sapiens" AND "10x genomics" AND accession:E-*'),
+    ("10x Chromium",
+     'organism:"Homo sapiens" AND "10x chromium" AND accession:E-*'),
+    ("Chromium SC",
+     'organism:"Homo sapiens" AND "chromium single cell" AND accession:E-*'),
+    ("Drop-seq",
+     'organism:"Homo sapiens" AND "drop-seq" AND accession:E-*'),
+    ("dropseq",
+     'organism:"Homo sapiens" AND "dropseq" AND accession:E-*'),
+    ("Smart-seq",
+     'organism:"Homo sapiens" AND "smart-seq" AND accession:E-*'),
+    ("Smart-seq2",
+     'organism:"Homo sapiens" AND "smart-seq2" AND accession:E-*'),
+    ("smartseq2",
+     'organism:"Homo sapiens" AND "smartseq2" AND accession:E-*'),
+    ("inDrop",
+     'organism:"Homo sapiens" AND "indrop" AND accession:E-*'),
+    ("CEL-Seq",
+     'organism:"Homo sapiens" AND "cel-seq" AND accession:E-*'),
+    ("CEL-Seq2",
+     'organism:"Homo sapiens" AND "cel-seq2" AND accession:E-*'),
+    ("MARS-seq",
+     'organism:"Homo sapiens" AND "mars-seq" AND accession:E-*'),
+    ("sci-RNA-seq",
+     'organism:"Homo sapiens" AND "sci-RNA-seq" AND accession:E-*'),
+    ("Seq-Well",
+     'organism:"Homo sapiens" AND "seq-well" AND accession:E-*'),
+    ("Microwell-seq",
+     'organism:"Homo sapiens" AND "microwell-seq" AND accession:E-*'),
+    ("SPLiT-seq",
+     'organism:"Homo sapiens" AND "split-seq" AND accession:E-*'),
+    ("STRT-seq",
+     'organism:"Homo sapiens" AND "strt-seq" AND accession:E-*'),
+    ("Fluidigm C1",
+     'organism:"Homo sapiens" AND "fluidigm C1" AND accession:E-*'),
+    ("Fluidigm SC",
+     'organism:"Homo sapiens" AND "fluidigm" AND "single cell" AND accession:E-*'),
+    ("CITE-seq",
+     'organism:"Homo sapiens" AND "cite-seq" AND accession:E-*'),
+    ("CITEseq",
+     'organism:"Homo sapiens" AND "citeseq" AND accession:E-*'),
+    ("Multiome",
+     'organism:"Homo sapiens" AND "multiome" AND accession:E-*'),
+    ("Multi-ome",
+     'organism:"Homo sapiens" AND "multi-ome" AND accession:E-*'),
+    ("Patch-seq",
+     'organism:"Homo sapiens" AND "patch-seq" AND accession:E-*'),
+    ("BD Rhapsody",
+     'organism:"Homo sapiens" AND "BD rhapsody" AND accession:E-*'),
+    ("Quartz-Seq",
+     'organism:"Homo sapiens" AND "quartz-seq" AND accession:E-*'),
+    ("SCOPE-seq",
+     'organism:"Homo sapiens" AND "scope-seq" AND accession:E-*'),
+    ("DBiT-seq",
+     'organism:"Homo sapiens" AND "dbit-seq" AND accession:E-*'),
+    ("droplet RNA",
+     'organism:"Homo sapiens" AND "droplet-based" AND "RNA" AND accession:E-*'),
+    ("plate-based SC",
+     'organism:"Homo sapiens" AND "plate-based" AND "single cell" AND accession:E-*'),
+
+    # ── Study type (ArrayExpress-specific metadata) ──
+    ("type:sc RNA coding",
+     'organism:"Homo sapiens" AND study_type:"RNA-seq of coding RNA from single cells" AND accession:E-*'),
+    ("type:sc RNA noncoding",
+     'organism:"Homo sapiens" AND study_type:"RNA-seq of non coding RNA from single cells" AND accession:E-*'),
+    ("type:sc sequencing",
+     'organism:"Homo sapiens" AND study_type:"single cell sequencing" AND accession:E-*'),
+
+    # ── Atlas / large consortium projects ──
+    ("cell atlas",
+     'organism:"Homo sapiens" AND "cell atlas" AND accession:E-*'),
+    ("Human Cell Atlas",
+     'organism:"Homo sapiens" AND "human cell atlas" AND accession:E-*'),
+    ("HCA SC",
+     'organism:"Homo sapiens" AND "HCA" AND "single cell" AND accession:E-*'),
+
+    # ── Broader catch-all (slightly over-inclusive, acceptable) ──
+    ("RNA-seq + single",
+     'organism:"Homo sapiens" AND study_type:"RNA-seq" AND "single" AND accession:E-*'),
+]
+
+
+# =============================================================================
+# HTTP Helpers
+# =============================================================================
+
+def _http_get(url, params=None, timeout=TIMEOUT, max_retries=MAX_RETRIES):
+    """
+    GET request with exponential-backoff retry.
+    Returns requests.Response on 200, None on permanent failure.
+    """
+    for attempt in range(max_retries):
+        try:
+            resp = requests.get(
+                url, params=params, timeout=timeout,
+                headers={"Accept": "application/json",
+                         "User-Agent": "AECollector/2.0"}
+            )
+            if resp.status_code == 200:
+                return resp
+            if resp.status_code == 404:
+                return None
+            if resp.status_code == 429:
+                wait = 2 ** (attempt + 2)
+                logging.warning("429 rate-limit, waiting %ds … %s", wait, url)
+                time.sleep(wait)
+                continue
+            if resp.status_code >= 500:
+                wait = 2 ** (attempt + 1)
+                logging.warning("%d server error, retry %d/%d in %ds",
+                                resp.status_code, attempt + 1, max_retries, wait)
+                time.sleep(wait)
+                continue
+            logging.warning("HTTP %d: %s", resp.status_code, url)
+            return None
+        except requests.exceptions.Timeout:
+            wait = 2 ** (attempt + 1)
+            logging.warning("Timeout, retry %d/%d in %ds. %s",
+                            attempt + 1, max_retries, wait, url)
+            time.sleep(wait)
+        except requests.exceptions.ConnectionError as exc:
+            wait = 2 ** (attempt + 1)
+            logging.warning("Connection error, retry %d/%d in %ds. %s",
+                            attempt + 1, max_retries, wait, exc)
+            time.sleep(wait)
+        except requests.exceptions.RequestException as exc:
+            logging.error("Request error: %s  %s", exc, url)
+            return None
+    logging.error("All %d retries failed: %s", max_retries, url)
+    return None
+
+
+def http_get_json(url, params=None, **kwargs):
+    """GET → parsed JSON (dict/list) or None."""
+    resp = _http_get(url, params=params, **kwargs)
+    if resp is None:
+        return None
+    text = resp.text.strip()
+    if not text:
+        return []
+    try:
+        return resp.json()
+    except json.JSONDecodeError:
+        logging.warning("Invalid JSON from %s", url)
+        return None
+
+
+# =============================================================================
+# Atomic JSON Write
+# =============================================================================
+
+def write_json(path, data):
+    """Write JSON atomically (write tmp then rename)."""
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, indent=2, ensure_ascii=False)
+    os.replace(tmp, path)
+
+
+# =============================================================================
+# Progress Tracker
+# =============================================================================
+
+class Progress:
+    """Tracks which accessions have been processed in each phase."""
+
+    def __init__(self, filepath):
+        self.filepath = filepath
+        if os.path.exists(filepath):
+            with open(filepath, "r", encoding="utf-8") as fh:
+                self._d = json.load(fh)
+        else:
+            self._d = {
+                "search_done": False,
+                "scea_done": False,
+                "biostudies_done": [],
+                "ena_done": [],
+                "biosamples_extracted": False,
+                "biosample_accessions": [],
+                "biosamples_done": [],
+            }
+
+    def save(self):
+        tmp = self.filepath + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(self._d, fh, ensure_ascii=False)
+        os.replace(tmp, self.filepath)
+
+    # ── simple flags ──
+
+    @property
+    def search_done(self):
+        return self._d.get("search_done", False)
+
+    @search_done.setter
+    def search_done(self, val):
+        self._d["search_done"] = val
+
+    @property
+    def scea_done(self):
+        return self._d.get("scea_done", False)
+
+    @scea_done.setter
+    def scea_done(self, val):
+        self._d["scea_done"] = val
+
+    @property
+    def biosamples_extracted(self):
+        return self._d.get("biosamples_extracted", False)
+
+    @biosamples_extracted.setter
+    def biosamples_extracted(self, val):
+        self._d["biosamples_extracted"] = val
+
+    @property
+    def biosample_accessions(self):
+        return self._d.get("biosample_accessions", [])
+
+    @biosample_accessions.setter
+    def biosample_accessions(self, val):
+        self._d["biosample_accessions"] = val
+
+    # ── per-accession tracking ──
+
+    def is_done(self, phase, accession):
+        return accession in set(self._d.get(f"{phase}_done", []))
+
+    def mark_done(self, phase, accession):
+        key = f"{phase}_done"
+        lst = self._d.setdefault(key, [])
+        if accession not in lst:
+            lst.append(accession)
+
+
+# =============================================================================
+# ENA Field Cache
+# =============================================================================
+
+_ena_fields_cache = {}
+
+
+def get_ena_fields(result_type):
+    """
+    Query ENA for all available columns for a result type.
+    Returns comma-separated string or None.  Cached after first call.
+    """
+    if result_type in _ena_fields_cache:
+        return _ena_fields_cache[result_type]
+
+    data = http_get_json(ENA_RETURN_FIELDS, params={"result": result_type})
+    if data and isinstance(data, list):
+        fields = ",".join(item["columnId"] for item in data if "columnId" in item)
+        _ena_fields_cache[result_type] = fields
+        logging.info("ENA fields for '%s': %d columns", result_type, len(data))
+        return fields
+
+    logging.warning("Could not retrieve ENA fields for '%s'", result_type)
+    _ena_fields_cache[result_type] = None
+    return None
+
+
+# =============================================================================
+# Phase 1 — Discovery: build master accession list
+# =============================================================================
+
+def discover_accessions(progress, accessions_file, scea_file):
+    """
+    Run BioStudies keyword searches + SCEA catalog to produce a
+    deduplicated list of ArrayExpress accessions (E-*).
+    """
+    if progress.search_done and os.path.exists(accessions_file):
+        logging.info("Discovery already complete — loading from file.")
+        with open(accessions_file, "r", encoding="utf-8") as fh:
+            return json.load(fh)
+
+    accessions = set()
+    n_strategies = len(SEARCH_STRATEGIES)
+    logging.info("Running %d BioStudies search strategies …", n_strategies)
+
+    for idx, (label, query) in enumerate(SEARCH_STRATEGIES, 1):
+        page = 1
+        added = 0
+        while True:
+            data = http_get_json(
+                BIOSTUDIES_SEARCH,
+                params={"query": query, "pageSize": PAGE_SIZE, "page": page},
+            )
+            if not data:
+                break
+            hits = data.get("hits", [])
+            if not hits:
+                break
+            for hit in hits:
+                acc = hit.get("accession", "")
+                if acc.startswith("E-") and acc not in accessions:
+                    accessions.add(acc)
+                    added += 1
+            total_hits = data.get("totalHits", 0)
+            if page * PAGE_SIZE >= total_hits:
+                break
+            page += 1
+            time.sleep(DELAY)
+
+        logging.info("  [%d/%d] %-30s +%5d  (total %d)",
+                      idx, n_strategies, label, added, len(accessions))
+        time.sleep(DELAY)
+
+    # ── SCEA ──
+    scea_accs = _collect_scea(progress, scea_file)
+    scea_added = 0
+    for acc in scea_accs:
+        if acc.startswith("E-") and acc not in accessions:
+            accessions.add(acc)
+            scea_added += 1
+    logging.info("  SCEA: +%d  (total %d)", scea_added, len(accessions))
+
+    # Save
+    sorted_accs = sorted(accessions)
+    with open(accessions_file, "w", encoding="utf-8") as fh:
+        json.dump(sorted_accs, fh, indent=2, ensure_ascii=False)
+    progress.search_done = True
+    progress.save()
+
+    logging.info("Discovery complete: %d unique accessions", len(sorted_accs))
+    return sorted_accs
+
+
+def _collect_scea(progress, scea_file):
+    """Fetch SCEA human experiment catalog, save raw, return accession list."""
+    if progress.scea_done and os.path.exists(scea_file):
+        with open(scea_file, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+        exps = data if isinstance(data, list) else data.get("experiments", [])
+        return [e.get("experimentAccession", "") for e in exps]
+
+    logging.info("Fetching SCEA catalog …")
+    data = http_get_json(SCEA_EXPERIMENTS, params={"species": "Homo sapiens"})
+    if data:
+        with open(scea_file, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, indent=2, ensure_ascii=False)
+        progress.scea_done = True
+        progress.save()
+        exps = data if isinstance(data, list) else data.get("experiments", [])
+        logging.info("SCEA: %d human experiments", len(exps))
+        return [e.get("experimentAccession", "") for e in exps]
+
+    logging.warning("SCEA fetch failed")
+    return []
+
+
+# =============================================================================
+# Phase 2 — BioStudies study detail
+# =============================================================================
+
+def collect_biostudies(accessions, bs_dir, progress):
+    """Fetch full BioStudies study JSON for each accession."""
+    todo = [a for a in accessions if not progress.is_done("biostudies", a)]
+    logging.info("BioStudies detail: %d to fetch (%d already done)",
+                  len(todo), len(accessions) - len(todo))
+
+    for i, acc in enumerate(tqdm(todo, desc="BioStudies detail"), 1):
+        path = os.path.join(bs_dir, f"{acc}.json")
+
+        if os.path.exists(path):
+            progress.mark_done("biostudies", acc)
+            if i % SAVE_INTERVAL == 0:
+                progress.save()
+            continue
+
+        data = http_get_json(f"{BIOSTUDIES_DETAILS}/{acc}")
+        if data is not None:
+            write_json(path, data)
+        else:
+            # Save a minimal marker so we don't retry forever
+            write_json(path, {"accession": acc, "_error": "fetch_failed"})
+
+        progress.mark_done("biostudies", acc)
+        if i % SAVE_INTERVAL == 0:
+            progress.save()
+        time.sleep(DELAY)
+
+    progress.save()
+    logging.info("BioStudies detail phase complete.")
+
+
+# =============================================================================
+# Phase 3 — ENA data (all levels)
+# =============================================================================
+
+def _ena_filereport(accession, result_type, fields):
+    """ENA /filereport endpoint. Returns list of dicts, [] or None."""
+    params = {
+        "accession": accession,
+        "result": result_type,
+        "format": "json",
+        "limit": 0,
+    }
+    if fields:
+        params["fields"] = fields
+    resp = _http_get(ENA_FILEREPORT, params=params)
+    if resp is None:
+        return None
+    text = resp.text.strip()
+    if not text:
+        return []
+    try:
+        return resp.json()
+    except json.JSONDecodeError:
+        return None
+
+
+def _ena_search(query, result_type, fields):
+    """ENA /search endpoint. Returns list of dicts, [] or None."""
+    params = {
+        "query": query,
+        "result": result_type,
+        "format": "json",
+        "limit": 0,
+    }
+    if fields:
+        params["fields"] = fields
+    resp = _http_get(ENA_SEARCH, params=params)
+    if resp is None:
+        return None
+    text = resp.text.strip()
+    if not text:
+        return []
+    try:
+        return resp.json()
+    except json.JSONDecodeError:
+        return None
+
+
+def _extract_ena_study_acc(runs):
+    """Get the first ENA study accession (ERP/PRJEB) from run records."""
+    if not isinstance(runs, list):
+        return None
+    for r in runs:
+        if isinstance(r, dict):
+            v = r.get("study_accession", "")
+            if v:
+                return v
+    return None
+
+
+def _extract_ena_accession_from_biostudies(bs_data):
+    """
+    Extract ENA study accession (ERP* or PRJEB*) from BioStudies data.
+    Searches through all JSON content for ENA accession patterns.
+    """
+    if not bs_data or not isinstance(bs_data, dict):
+        return None
+    
+    # Convert to JSON string for pattern matching
+    json_str = json.dumps(bs_data)
+    
+    # Look for ENA study accession patterns
+    # Primary: ERP* (e.g., ERP004573)
+    # Secondary: PRJEB* (e.g., PRJEB5197)
+    patterns = [
+        r'(ERP\d+)',      # ENA study accession
+        r'(PRJEB\d+)',    # ENA project accession
+        r'(PRJNA\d+)',    # NCBI project (for GEO data)
+    ]
+    
+    for pattern in patterns:
+        match = re.search(pattern, json_str)
+        if match:
+            return match.group(1)
+    
+    return None
+
+
+def collect_ena(accessions, ena_dir, bs_dir, progress):
+    """
+    For each accession, fetch five ENA result types:
+      read_run, read_experiment, analysis  (via filereport)
+      sample, study                        (via search)
+    All stored as one JSON file per accession.
+    
+    FIXED: Now extracts ENA study accession from BioStudies data first.
+    """
+    todo = [a for a in accessions if not progress.is_done("ena", a)]
+    logging.info("ENA data: %d to fetch (%d already done)",
+                  len(todo), len(accessions) - len(todo))
+
+    # Use complete field lists for full metadata collection
+    # (Optimized for comprehensive metadata database)
+    rf_run = ",".join(ENA_READ_RUN_FIELDS)
+    rf_exp = ",".join(ENA_READ_EXPERIMENT_FIELDS)
+    rf_ana = None  # analysis fields not defined yet
+    sf_sample = ",".join(ENA_SAMPLE_FIELDS)
+    sf_study = ",".join(ENA_STUDY_FIELDS)
+    
+    logging.info("Using complete ENA field sets:")
+    logging.info("  read_run: %d fields", len(ENA_READ_RUN_FIELDS))
+    logging.info("  read_experiment: %d fields", len(ENA_READ_EXPERIMENT_FIELDS))
+    logging.info("  sample: %d fields", len(ENA_SAMPLE_FIELDS))
+    logging.info("  study: %d fields", len(ENA_STUDY_FIELDS))
+    
+    # Counters for logging
+    skipped_no_ena = 0
+    processed_with_ena = 0
+
+    for i, acc in enumerate(tqdm(todo, desc="ENA data"), 1):
+        path = os.path.join(ena_dir, f"{acc}.json")
+
+        if os.path.exists(path):
+            progress.mark_done("ena", acc)
+            if i % SAVE_INTERVAL == 0:
+                progress.save()
+            continue
+
+        # ---- FIX: Extract ENA accession from BioStudies data ----
+        bs_path = os.path.join(bs_dir, f"{acc}.json")
+        ena_acc = None
+        
+        if os.path.exists(bs_path):
+            try:
+                with open(bs_path, "r", encoding="utf-8") as f:
+                    bs_data = json.load(f)
+                ena_acc = _extract_ena_accession_from_biostudies(bs_data)
+            except (json.JSONDecodeError, IOError) as e:
+                logging.warning("Failed to read BioStudies data for %s: %s", acc, e)
+        
+        # If no ENA accession found, skip this accession
+        if not ena_acc:
+            # Mark as done with error info
+            write_json(path, {
+                "accession": acc,
+                "_error": "no_ena_accession",
+                "_note": "BioStudies data does not contain ENA study accession (ERP*/PRJEB*)"
+            })
+            progress.mark_done("ena", acc)
+            skipped_no_ena += 1
+            if i % SAVE_INTERVAL == 0:
+                progress.save()
+            time.sleep(DELAY)
+            continue
+        
+        processed_with_ena += 1
+        ena = {"accession": acc, "ena_study_accession": ena_acc}
+
+        # ---- filereport-based (using ENA accession) ----
+        ena["read_run"] = _ena_filereport(ena_acc, "read_run", rf_run)
+        time.sleep(DELAY_INTRA)
+
+        ena["read_experiment"] = _ena_filereport(ena_acc, "read_experiment", rf_exp)
+        time.sleep(DELAY_INTRA)
+
+        ena["analysis"] = _ena_filereport(ena_acc, "analysis", rf_ana)
+        time.sleep(DELAY_INTRA)
+
+        # ---- search-based (need ENA study accession) ----
+        # Try to get study accession from read_run results first
+        ena_study_acc = _extract_ena_study_acc(ena.get("read_run"))
+        
+        if not ena_study_acc:
+            # Fallback to using the extracted ENA accession directly
+            ena_study_acc = ena_acc
+
+        query_str = f'study_accession="{ena_study_acc}"'
+        
+        ena["sample"] = _ena_search(query_str, "sample", sf_sample)
+        time.sleep(DELAY_INTRA)
+
+        ena["study"] = _ena_search(query_str, "study", sf_study)
+
+        write_json(path, ena)
+        progress.mark_done("ena", acc)
+        if i % SAVE_INTERVAL == 0:
+            progress.save()
+        time.sleep(DELAY)
+
+    progress.save()
+    logging.info("ENA data phase complete.")
+    logging.info("  Processed with ENA accession: %d", processed_with_ena)
+    logging.info("  Skipped (no ENA accession): %d", skipped_no_ena)
+
+
+# =============================================================================
+# Phase 4 — Extract BioSample accessions from ENA data
+# =============================================================================
+
+# Fields in ENA records that may contain BioSample accessions (SAM*)
+_BIOSAMPLE_FIELDS = (
+    "secondary_sample_accession",
+    "biosample_accession",
+    "sample_accession",
+    "biosample",
+)
+
+
+def extract_biosample_accessions(ena_dir, progress):
+    """
+    Scan all raw_ena/*.json files and collect every unique BioSample
+    accession (SAM…).
+    """
+    if progress.biosamples_extracted and progress.biosample_accessions:
+        logging.info("BioSample accessions already extracted: %d",
+                      len(progress.biosample_accessions))
+        return progress.biosample_accessions
+
+    logging.info("Scanning ENA data for BioSample accessions …")
+    accs = set()
+
+    for fname in os.listdir(ena_dir):
+        if not fname.endswith(".json"):
+            continue
+        fpath = os.path.join(ena_dir, fname)
+        try:
+            with open(fpath, "r", encoding="utf-8") as fh:
+                ena = json.load(fh)
+        except (json.JSONDecodeError, IOError):
+            continue
+
+        # Scan every section that contains record lists
+        for section_key in ("read_run", "read_experiment", "sample", "analysis"):
+            records = ena.get(section_key)
+            if not isinstance(records, list):
+                continue
+            for rec in records:
+                if not isinstance(rec, dict):
+                    continue
+                for field in _BIOSAMPLE_FIELDS:
+                    val = str(rec.get(field, "")).strip()
+                    # BioSample accessions start with SAM (SAMEA, SAMN, SAMD)
+                    if val.upper().startswith("SAM"):
+                        # Some fields contain semicolon-separated lists
+                        for part in val.split(";"):
+                            part = part.strip()
+                            if part.upper().startswith("SAM"):
+                                accs.add(part)
+
+    sorted_accs = sorted(accs)
+    progress.biosample_accessions = sorted_accs
+    progress.biosamples_extracted = True
+    progress.save()
+
+    logging.info("Found %d unique BioSample accessions", len(sorted_accs))
+    return sorted_accs
+
+
+# =============================================================================
+# Phase 5 — BioSamples detail (concurrent)
+# =============================================================================
+
+def _fetch_one_biosample(acc, bs_dir):
+    """
+    Fetch a single BioSample and write to disk.
+    Returns (accession, status_string).
+    Thread-safe: uses per-call requests.get, writes to unique file.
+    """
+    path = os.path.join(bs_dir, f"{acc}.json")
+    if os.path.exists(path):
+        return acc, "skip"
+
+    try:
+        data = http_get_json(f"{BIOSAMPLES_BASE}/{acc}")
+        if data is not None:
+            write_json(path, data)
+            return acc, "ok"
+        return acc, "fail"
+    except Exception as exc:
+        logging.error("BioSample %s error: %s", acc, exc)
+        return acc, "fail"
+
+
+def collect_biosamples(biosample_accs, bs_dir, progress):
+    """Fetch BioSamples records with concurrent workers."""
+    todo = [a for a in biosample_accs if not progress.is_done("biosamples", a)]
+    logging.info("BioSamples: %d to fetch (%d already done)",
+                  len(todo), len(biosample_accs) - len(todo))
+    if not todo:
+        return
+
+    ok_n = fail_n = skip_n = 0
+
+    with ThreadPoolExecutor(max_workers=BIOSAMPLES_WORKERS) as pool:
+        futures = {
+            pool.submit(_fetch_one_biosample, acc, bs_dir): acc
+            for acc in todo
+        }
+
+        for fut in tqdm(as_completed(futures), total=len(futures),
+                        desc="BioSamples"):
+            acc = futures[fut]
+            try:
+                _, status = fut.result()
+                if status == "ok":
+                    ok_n += 1
+                elif status == "skip":
+                    skip_n += 1
+                else:
+                    fail_n += 1
+            except Exception as exc:
+                logging.error("BioSample %s exception: %s", acc, exc)
+                fail_n += 1
+
+            progress.mark_done("biosamples", acc)
+            total_done = ok_n + fail_n + skip_n
+            if total_done % SAVE_INTERVAL == 0:
+                progress.save()
+
+    progress.save()
+    logging.info("BioSamples complete: %d fetched, %d skipped, %d failed",
+                  ok_n, skip_n, fail_n)
+
+
+# =============================================================================
+# Summary
+# =============================================================================
+
+def print_summary(base_dir, scea_file):
+    def _count(d):
+        if not os.path.isdir(d):
+            return 0
+        return sum(1 for f in os.listdir(d) if f.endswith(".json"))
+
+    bs = _count(os.path.join(base_dir, "raw_biostudies"))
+    ena = _count(os.path.join(base_dir, "raw_ena"))
+    bio = _count(os.path.join(base_dir, "raw_biosamples"))
+    scea = "yes" if os.path.exists(scea_file) else "no"
+
+    logging.info("=" * 60)
+    logging.info("Collection Summary")
+    logging.info("=" * 60)
+    logging.info("  raw_biostudies/  : %d JSON files", bs)
+    logging.info("  raw_ena/         : %d JSON files", ena)
+    logging.info("  raw_biosamples/  : %d JSON files", bio)
+    logging.info("  raw_scea.json    : %s", scea)
+    logging.info("=" * 60)
+
+
+# =============================================================================
+# Main
+# =============================================================================
+
+def main():
+    # Ensure output directory exists before setting up file logger
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s  %(levelname)-8s  %(message)s",
+        handlers=[
+            logging.FileHandler(
+                os.path.join(OUTPUT_DIR, "collector.log"), encoding="utf-8"
+            ),
+            logging.StreamHandler(),
+        ],
+    )
+
+    logging.info("=" * 60)
+    logging.info("ArrayExpress Human scRNA-seq Raw Data Collector v2.1")
+    logging.info("=" * 60)
+
+    # Create subdirectories
+    bs_dir = os.path.join(OUTPUT_DIR, "raw_biostudies")
+    ena_dir = os.path.join(OUTPUT_DIR, "raw_ena")
+    bio_dir = os.path.join(OUTPUT_DIR, "raw_biosamples")
+    for d in (bs_dir, ena_dir, bio_dir):
+        os.makedirs(d, exist_ok=True)
+
+    progress_file = os.path.join(OUTPUT_DIR, "progress.json")
+    accessions_file = os.path.join(OUTPUT_DIR, "collected_accessions.json")
+    scea_file = os.path.join(OUTPUT_DIR, "raw_scea.json")
+
+    progress = Progress(progress_file)
+
+    # Phase 1: discover all ArrayExpress accessions
+    accessions = discover_accessions(progress, accessions_file, scea_file)
+    if not accessions:
+        logging.error("No accessions discovered. Exiting.")
+        return
+
+    # Phase 2: BioStudies study detail
+    collect_biostudies(accessions, bs_dir, progress)
+
+    # Phase 3: ENA data (all levels, all fields)
+    collect_ena(accessions, ena_dir, bs_dir, progress)
+
+    # Phase 4: extract BioSample accessions from ENA data
+    biosample_accs = extract_biosample_accessions(ena_dir, progress)
+
+    # Phase 5: BioSamples detail (concurrent)
+    if biosample_accs:
+        collect_biosamples(biosample_accs, bio_dir, progress)
+    else:
+        logging.info("No BioSample accessions found — skipping Phase 5.")
+
+    # Summary
+    print_summary(OUTPUT_DIR, scea_file)
+    logging.info("All done.")
+
+
+if __name__ == "__main__":
+    main()
