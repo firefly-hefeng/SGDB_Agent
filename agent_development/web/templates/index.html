@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCDB-Agent | 单细胞数据库智能检索系统</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Socket.IO -->
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.2); opacity: 0; }
+        }
+        .animate-pulse-ring {
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        
+        /* 玻璃态效果 */
+        .glass {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        
+        /* 渐变背景 */
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .gradient-bg-2 {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        /* 代码高亮 */
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            font-family: 'Fira Code', monospace;
+        }
+    </style>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' },
+                        secondary: { 50: '#f5f3ff', 100: '#ede9fe', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-800" x-data="scdbApp()" x-init="init()">
+    
+    <!-- 顶部导航 -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center gap-3">
+                        <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center text-white shadow-lg">
+                            <i class="fa-solid fa-dna text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-secondary-600">
+                                SCDB-Agent
+                            </h1>
+                            <p class="text-xs text-slate-500">单细胞数据库智能检索系统 v2.0</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 导航菜单 -->
+                <div class="flex items-center gap-2">
+                    <button @click="currentTab = 'search'" 
+                            :class="currentTab === 'search' ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-100'"
+                            class="px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <span class="hidden sm:inline">智能检索</span>
+                    </button>
+                    <button @click="currentTab = 'download'"
+                            :class="currentTab === 'download' ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-100'"
+                            class="px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-download"></i>
+                        <span class="hidden sm:inline">下载管理</span>
+                        <span x-show="downloadTasks.length > 0" 
+                              x-text="downloadTasks.length"
+                              class="bg-red-500 text-white text-xs rounded-full px-2 py-0.5"></span>
+                    </button>
+                    <button @click="currentTab = 'stats'"
+                            :class="currentTab === 'stats' ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-100'"
+                            class="px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie"></i>
+                        <span class="hidden sm:inline">统计分析</span>
+                    </button>
+                    <button @click="currentTab = 'field'"
+                            :class="currentTab === 'field' ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-100'"
+                            class="px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        <span class="hidden sm:inline">字段扩展</span>
+                    </button>
+                </div>
+                
+                <!-- 状态指示器 -->
+                <div class="flex items-center">
+                    <div class="flex items-center gap-2 px-3 py-1 rounded-full text-sm"
+                         :class="isConnected ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'">
+                        <div class="w-2 h-2 rounded-full" :class="isConnected ? 'bg-green-500' : 'bg-red-500'"></div>
+                        <span x-text="isConnected ? '已连接' : '未连接'"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 主内容区 -->
+    <main class="pt-20 pb-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        
+        <!-- ==================== 搜索页面 ==================== -->
+        <div x-show="currentTab === 'search'" x-transition class="space-y-6">
+            
+            <!-- 搜索框 -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-100">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2">智能检索单细胞数据</h2>
+                    <p class="text-slate-500">使用自然语言描述您的需求，AI将自动理解并检索相关数据</p>
+                </div>
+                
+                <div class="relative max-w-3xl mx-auto">
+                    <input type="text" 
+                           x-model="searchQuery"
+                           @keydown.enter="executeSearch()"
+                           placeholder="例如：查找肺癌相关的10x Genomics单细胞数据"
+                           class="w-full pl-12 pr-32 py-4 rounded-xl border-2 border-slate-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 transition-all text-lg"
+                           :disabled="isSearching">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-xl"></i>
+                    <button @click="executeSearch()"
+                            :disabled="isSearching || !searchQuery.trim()"
+                            class="absolute right-2 top-1/2 -translate-y-1/2 px-6 py-2 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2">
+                        <i x-show="isSearching" class="fa-solid fa-circle-notch fa-spin"></i>
+                        <span x-text="isSearching ? '搜索中...' : '搜索'"></span>
+                    </button>
+                </div>
+                
+                <!-- 快捷标签 -->
+                <div class="flex flex-wrap justify-center gap-2 mt-4">
+                    <template x-for="tag in quickTags" :key="tag">
+                        <button @click="searchQuery = tag; executeSearch()"
+                                class="px-3 py-1 bg-slate-100 hover:bg-slate-200 rounded-full text-sm text-slate-600 transition-colors">
+                            <i class="fa-solid fa-bolt text-yellow-500 mr-1"></i>
+                            <span x-text="tag"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+            
+            <!-- 搜索历史和上下文 -->
+            <div x-show="sessionHistory.length > 0" class="bg-white rounded-xl shadow p-4 border border-slate-100">
+                <h3 class="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-primary-500"></i>
+                    会话历史
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="(query, idx) in sessionHistory" :key="idx">
+                        <button @click="searchQuery = query"
+                                class="px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg text-sm hover:bg-primary-100 transition-colors">
+                            <span x-text="query"></span>
+                        </button>
+                    </template>
+                </div>
+            </div>
+            
+            <!-- 搜索结果 -->
+            <div x-show="searchResults.length > 0" class="space-y-4 animate-fade-in">
+                
+                <!-- 结果统计和控制 -->
+                <div class="flex flex-wrap items-center justify-between gap-4 bg-white rounded-xl shadow p-4 border border-slate-100">
+                    <div class="flex items-center gap-4">
+                        <div class="text-3xl font-bold text-primary-600" x-text="totalResults.toLocaleString()"></div>
+                        <div class="text-slate-500">
+                            <div class="font-medium">条匹配记录</div>
+                            <div class="text-sm" x-text="`显示 ${searchResults.length} 条 / 耗时 ${executionTime.toFixed(2)} 秒`"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 显示数量选择 -->
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-slate-600">每页显示:</label>
+                        <select x-model="currentLimit" @change="changeLimit($event.target.value)"
+                                class="px-3 py-1.5 rounded-lg border border-slate-300 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-200">
+                            <option value="20">20条</option>
+                            <option value="50">50条</option>
+                            <option value="100">100条</option>
+                            <option value="500">500条</option>
+                            <option value="1000">1000条</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center gap-2">
+                        <button @click="exportResults()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-file-export"></i>
+                            导出当前页
+                        </button>
+                        <button @click="exportAllResults('csv')" class="px-4 py-2 bg-green-100 hover:bg-green-200 rounded-lg text-green-700 transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-file-csv"></i>
+                            导出全部
+                        </button>
+                        <button @click="prepareDownload()" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center gap-2">
+                            <i class="fa-solid fa-download"></i>
+                            下载数据
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 查询意图 -->
+                <div x-show="queryIntent" class="bg-gradient-to-r from-primary-50 to-secondary-50 rounded-xl p-4 border border-primary-100">
+                    <div class="flex items-start gap-3">
+                        <i class="fa-solid fa-lightbulb text-yellow-500 mt-1"></i>
+                        <div>
+                            <div class="font-medium text-slate-800">查询意图</div>
+                            <div class="text-slate-600" x-text="queryIntent"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 数据表格 -->
+                <div class="bg-white rounded-xl shadow border border-slate-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                    <th class="px-4 py-3 font-semibold text-slate-700 w-10">
+                                        <input type="checkbox" @change="toggleSelectAll($event)" class="rounded border-slate-300">
+                                    </th>
+                                    <th class="px-4 py-3 font-semibold text-slate-700">标题</th>
+                                    <th class="px-4 py-3 font-semibold text-slate-700">疾病</th>
+                                    <th class="px-4 py-3 font-semibold text-slate-700">组织</th>
+                                    <th class="px-4 py-3 font-semibold text-slate-700">平台</th>
+                                    <th class="px-4 py-3 font-semibold text-slate-700">数据库</th>
+                                    <th class="px-4 py-3 font-semibold text-slate-700">开放</th>
+                                    <th class="px-4 py-3 font-semibold text-slate-700">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <template x-for="(result, idx) in searchResults" :key="idx">
+                                    <tr class="hover:bg-slate-50 transition-colors">
+                                        <td class="px-4 py-3">
+                                            <input type="checkbox" x-model="selectedResults" :value="idx" class="rounded border-slate-300">
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <div class="font-medium text-slate-800 max-w-xs truncate" x-text="result.title || 'N/A'"></div>
+                                            <div class="text-xs text-slate-500" x-text="result.sample_uid || ''"></div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded-full text-xs" 
+                                                  x-text="result.disease_standardized || result.disease || 'N/A'"></span>
+                                        </td>
+                                        <td class="px-4 py-3 text-slate-600" x-text="result.tissue_standardized || result.tissue_location || 'N/A'"></td>
+                                        <td class="px-4 py-3">
+                                            <span class="px-2 py-1 bg-purple-50 text-purple-700 rounded-full text-xs"
+                                                  x-text="result.platform_standardized || result.sequencing_platform || 'N/A'"></span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span class="px-2 py-1 bg-green-50 text-green-700 rounded-full text-xs"
+                                                  x-text="result.database_standardized || result.source_database || 'N/A'"></span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <span :class="result.matrix_open ? 'text-green-500' : 'text-red-400'"
+                                                  class="text-lg">
+                                                <i :class="result.matrix_open ? 'fa-solid fa-circle-check' : 'fa-solid fa-circle-xmark'"></i>
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <button @click="viewDetail(result)" class="text-primary-600 hover:text-primary-800">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- 加载更多按钮 -->
+                <div x-show="hasMore" class="flex justify-center py-4">
+                    <button @click="loadMore()" 
+                            :disabled="isLoadingMore"
+                            class="px-6 py-3 bg-white border border-primary-500 text-primary-600 rounded-xl hover:bg-primary-50 transition-colors flex items-center gap-2 shadow-sm">
+                        <i x-show="isLoadingMore" class="fa-solid fa-circle-notch fa-spin"></i>
+                        <span x-text="isLoadingMore ? '加载中...' : `加载更多 (还有 ${totalResults - searchResults.length} 条)`"></span>
+                    </button>
+                </div>
+                
+                <!-- 建议查询 -->
+                <div x-show="suggestedQueries.length > 0" class="bg-white rounded-xl shadow p-4 border border-slate-100">
+                    <h3 class="font-semibold text-slate-700 mb-3">相关建议</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="suggestion in suggestedQueries" :key="suggestion">
+                            <button @click="searchQuery = suggestion; executeSearch()"
+                                    class="px-3 py-1.5 bg-secondary-50 text-secondary-700 rounded-lg text-sm hover:bg-secondary-100 transition-colors">
+                                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>
+                                <span x-text="suggestion"></span>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 空状态 -->
+            <div x-show="hasSearched && searchResults.length === 0 && !isSearching" 
+                 class="text-center py-16 bg-white rounded-xl shadow border border-slate-100">
+                <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fa-solid fa-inbox text-4xl text-slate-400"></i>
+                </div>
+                <h3 class="text-lg font-medium text-slate-700 mb-2">未找到匹配结果</h3>
+                <p class="text-slate-500">尝试调整查询条件或使用更通用的关键词</p>
+            </div>
+        </div>
+        
+        <!-- ==================== 下载管理页面 ==================== -->
+        <div x-show="currentTab === 'download'" x-transition class="space-y-6">
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-100">
+                <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+                    <i class="fa-solid fa-download text-primary-500"></i>
+                    下载管理
+                </h2>
+                
+                <!-- 下载任务列表 -->
+                <div x-show="downloadTasks.length > 0" class="space-y-3">
+                    <template x-for="task in downloadTasks" :key="task.task_id">
+                        <div class="border border-slate-200 rounded-xl p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center"
+                                         :class="{
+                                             'bg-blue-100 text-blue-600': task.database === 'GEO',
+                                             'bg-purple-100 text-purple-600': task.database === 'CellxGene',
+                                             'bg-green-100 text-green-600': task.database === 'SRA'
+                                         }">
+                                        <i class="fa-solid fa-database"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-slate-800" x-text="task.project_id"></div>
+                                        <div class="text-sm text-slate-500">
+                                            <span x-text="task.database"></span> • 
+                                            <span x-text="task.file_type"></span> • 
+                                            <span x-text="task.file_format"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium"
+                                          :class="{
+                                              'bg-yellow-100 text-yellow-700': task.status === 'pending',
+                                              'bg-blue-100 text-blue-700': task.status === 'downloading',
+                                              'bg-green-100 text-green-700': task.status === 'completed',
+                                              'bg-red-100 text-red-700': task.status === 'failed'
+                                          }"
+                                          x-text="task.status">
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- 进度条 -->
+                            <div x-show="task.status === 'downloading'" class="mt-3">
+                                <div class="flex items-center justify-between text-sm text-slate-600 mb-1">
+                                    <span x-text="`${task.progress.toFixed(1)}%`"></span>
+                                    <span x-text="formatSpeed(task.speed)"></span>
+                                </div>
+                                <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary-500 rounded-full transition-all duration-300"
+                                         :style="`width: ${task.progress}%`"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- 目标路径 -->
+                            <div class="mt-2 text-sm text-slate-500">
+                                <i class="fa-solid fa-folder-open mr-1"></i>
+                                <span x-text="task.target_path"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- 空状态 -->
+                <div x-show="downloadTasks.length === 0" class="text-center py-16">
+                    <div class="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fa-solid fa-cloud-arrow-down text-4xl text-slate-400"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-slate-700 mb-2">暂无下载任务</h3>
+                    <p class="text-slate-500 mb-4">在搜索结果中选择数据并点击"下载数据"按钮</p>
+                    <button @click="currentTab = 'search'" class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
+                        去搜索数据
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== 统计分析页面 ==================== -->
+        <div x-show="currentTab === 'stats'" x-transition class="space-y-6">
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-100">
+                <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-3">
+                    <i class="fa-solid fa-chart-pie text-secondary-500"></i>
+                    数据统计分析
+                </h2>
+                
+                <!-- 字段选择 -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-slate-700 mb-2">选择统计字段</label>
+                    <select x-model="statsField" @change="loadStatistics()"
+                            class="w-full max-w-md px-4 py-2 rounded-lg border border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200">
+                        <option value="">-- 选择字段 --</option>
+                        <option value="disease_standardized">疾病 (标准化)</option>
+                        <option value="tissue_standardized">组织 (标准化)</option>
+                        <option value="platform_standardized">测序平台</option>
+                        <option value="database_standardized">数据库来源</option>
+                        <option value="disease_category">疾病分类</option>
+                    </select>
+                </div>
+                
+                <!-- 统计图表 -->
+                <div x-show="statsData.length > 0" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 柱状图 -->
+                    <div class="bg-slate-50 rounded-xl p-4">
+                        <h3 class="font-semibold text-slate-700 mb-4">分布统计</h3>
+                        <canvas id="statsChart" height="250"></canvas>
+                    </div>
+                    
+                    <!-- 数据列表 -->
+                    <div class="bg-slate-50 rounded-xl p-4">
+                        <h3 class="font-semibold text-slate-700 mb-4">详细数据</h3>
+                        <div class="overflow-y-auto max-h-80">
+                            <table class="w-full text-sm">
+                                <thead class="bg-white border-b border-slate-200">
+                                    <tr>
+                                        <th class="px-3 py-2 text-left font-medium text-slate-600">值</th>
+                                        <th class="px-3 py-2 text-right font-medium text-slate-600">数量</th>
+                                        <th class="px-3 py-2 text-right font-medium text-slate-600">占比</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200">
+                                    <template x-for="item in statsData" :key="item.value">
+                                        <tr class="hover:bg-white transition-colors">
+                                            <td class="px-3 py-2 text-slate-800" x-text="item[statsField] || '(空)'"></td>
+                                            <td class="px-3 py-2 text-right text-slate-600" x-text="item.count.toLocaleString()"></td>
+                                            <td class="px-3 py-2 text-right">
+                                                <div class="flex items-center justify-end gap-2">
+                                                    <div class="w-16 h-2 bg-slate-200 rounded-full overflow-hidden">
+                                                        <div class="h-full bg-primary-500 rounded-full"
+                                                             :style="`width: ${(item.count / statsTotal * 100)}%`"></div>
+                                                    </div>
+                                                    <span class="text-slate-600 w-12" x-text="`${(item.count / statsTotal * 100).toFixed(1)}%`"></span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== 字段扩展页面 ==================== -->
+        <div x-show="currentTab === 'field'" x-transition class="space-y-6">
+            <div class="bg-white rounded-2xl shadow-lg p-6 border border-slate-100">
+                <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-3">
+                    <i class="fa-solid fa-wand-magic-sparkles text-purple-500"></i>
+                    字段扩展
+                </h2>
+                <p class="text-slate-600 mb-6">使用AI创建新的筛选字段，实现更精确的数据定位</p>
+                
+                <!-- 扩展表单 -->
+                <div class="max-w-2xl space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">字段名称</label>
+                        <input type="text" x-model="newField.name"
+                               placeholder="例如：is_immunotherapy_relevant"
+                               class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">字段定义</label>
+                        <input type="text" x-model="newField.definition"
+                               placeholder="例如：是否与免疫治疗相关"
+                               class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">判断标准</label>
+                        <textarea x-model="newField.criteria" rows="3"
+                                  placeholder="描述AI如何判断数据是否符合此字段..."
+                                  class="w-full px-4 py-2 rounded-lg border border-slate-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200"></textarea>
+                    </div>
+                    <button @click="expandField()"
+                            :disabled="isExpanding || !newField.name || !newField.definition"
+                            class="w-full py-3 bg-gradient-to-r from-primary-600 to-secondary-600 text-white rounded-lg font-medium hover:from-primary-700 hover:to-secondary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2">
+                        <i x-show="isExpanding" class="fa-solid fa-circle-notch fa-spin"></i>
+                        <span x-text="isExpanding ? '扩展中...' : '开始字段扩展'"></span>
+                    </button>
+                </div>
+                
+                <!-- 扩展示例 -->
+                <div class="mt-8 p-4 bg-slate-50 rounded-xl">
+                    <h3 class="font-semibold text-slate-700 mb-3">示例</h3>
+                    <div class="space-y-2 text-sm text-slate-600">
+                        <p><strong>字段名：</strong>is_cancer_immunology</p>
+                        <p><strong>定义：</strong>癌症免疫学相关研究</p>
+                        <p><strong>判断标准：</strong>研究涉及肿瘤免疫微环境、免疫检查点抑制剂(PD-1/PD-L1)、T细胞浸润、CAR-T治疗等</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </main>
+    
+    <!-- 详情弹窗 -->
+    <div x-show="showDetailModal" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+         @click.self="showDetailModal = false">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100">
+            <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                <h3 class="text-xl font-bold text-slate-800">数据详情</h3>
+                <button @click="showDetailModal = false" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto max-h-[60vh]">
+                <template x-if="selectedDetail">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-sm font-medium text-slate-500">标题</label>
+                            <p class="text-slate-800" x-text="selectedDetail.title || 'N/A'"></p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-sm font-medium text-slate-500">疾病</label>
+                                <p class="text-slate-800" x-text="selectedDetail.disease_standardized || selectedDetail.disease || 'N/A'"></p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-500">组织</label>
+                                <p class="text-slate-800" x-text="selectedDetail.tissue_standardized || selectedDetail.tissue_location || 'N/A'"></p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-500">平台</label>
+                                <p class="text-slate-800" x-text="selectedDetail.platform_standardized || selectedDetail.sequencing_platform || 'N/A'"></p>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-500">数据库</label>
+                                <p class="text-slate-800" x-text="selectedDetail.database_standardized || selectedDetail.source_database || 'N/A'"></p>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-slate-500">样本ID</label>
+                            <p class="text-slate-800 font-mono text-sm" x-text="selectedDetail.sample_uid || 'N/A'"></p>
+                        </div>
+                        <div x-show="selectedDetail.access_link">
+                            <label class="text-sm font-medium text-slate-500">访问链接</label>
+                            <a :href="selectedDetail.access_link" target="_blank" 
+                               class="text-primary-600 hover:text-primary-800 text-sm break-all"
+                               x-text="selectedDetail.access_link"></a>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 下载准备弹窗 -->
+    <div x-show="showDownloadModal"
+         x-transition
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+         @click.self="showDownloadModal = false">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
+            <h3 class="text-xl font-bold text-slate-800 mb-4">准备下载</h3>
+            <p class="text-slate-600 mb-4" x-text="`已选择 ${selectedResults.length} 条记录进行下载`"></p>
+            
+            <div class="space-y-3 mb-6">
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" x-model="downloadOptions.matrix" class="rounded border-slate-300">
+                    <span>表达矩阵 (matrix)</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" x-model="downloadOptions.raw" class="rounded border-slate-300">
+                    <span>原始数据 (raw)</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" x-model="downloadOptions.metadata" class="rounded border-slate-300">
+                    <span>元数据 (metadata)</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" x-model="downloadOptions.generateScript" class="rounded border-slate-300">
+                    <span>同时生成下载脚本</span>
+                </label>
+            </div>
+            
+            <div class="flex gap-3">
+                <button @click="showDownloadModal = false" class="flex-1 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors">
+                    取消
+                </button>
+                <button @click="startDownload()" 
+                        :disabled="!downloadOptions.matrix && !downloadOptions.raw && !downloadOptions.metadata"
+                        class="flex-1 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 transition-colors">
+                    开始下载
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript 应用逻辑 -->
+    <script>
+        function scdbApp() {
+            return {
+                // 状态
+                currentTab: 'search',
+                isConnected: false,
+                socket: null,
+                
+                // 搜索相关
+                searchQuery: '',
+                isSearching: false,
+                hasSearched: false,
+                searchResults: [],
+                selectedResults: [],
+                totalResults: 0,
+                executionTime: 0,
+                queryIntent: '',
+                suggestedQueries: [],
+                sessionHistory: [],
+                sessionId: null,
+                currentFilters: {},  // 保存当前查询条件用于加载更多
+                currentOffset: 0,
+                currentLimit: 20,
+                hasMore: false,
+                isLoadingMore: false,
+                
+                // 下载相关
+                downloadTasks: [],
+                showDownloadModal: false,
+                downloadOptions: {
+                    matrix: true,
+                    raw: false,
+                    metadata: false,
+                    generateScript: true
+                },
+                
+                // 统计相关
+                statsField: '',
+                statsData: [],
+                statsTotal: 0,
+                statsChart: null,
+                
+                // 字段扩展
+                newField: {
+                    name: '',
+                    definition: '',
+                    criteria: ''
+                },
+                isExpanding: false,
+                
+                // 详情弹窗
+                showDetailModal: false,
+                selectedDetail: null,
+                
+                // 快捷标签
+                quickTags: [
+                    '肺癌单细胞数据',
+                    'COVID-19免疫研究',
+                    '脑组织10x数据',
+                    '乳腺癌开放数据',
+                    '血液PBMC样本'
+                ],
+                
+                // 初始化
+                init() {
+                    this.initSocket();
+                    this.sessionId = localStorage.getItem('scdb_session_id') || this.generateSessionId();
+                    localStorage.setItem('scdb_session_id', this.sessionId);
+                },
+                
+                // 生成会话ID
+                generateSessionId() {
+                    return 'sess_' + Math.random().toString(36).substr(2, 9);
+                },
+                
+                // 初始化WebSocket
+                initSocket() {
+                    this.socket = io();
+                    
+                    this.socket.on('connect', () => {
+                        this.isConnected = true;
+                        console.log('WebSocket已连接');
+                    });
+                    
+                    this.socket.on('disconnect', () => {
+                        this.isConnected = false;
+                        console.log('WebSocket已断开');
+                    });
+                    
+                    this.socket.on('download_progress', (data) => {
+                        this.updateDownloadProgress(data);
+                    });
+                    
+                    this.socket.on('download_complete', (data) => {
+                        this.updateDownloadStatus(data.task_id, data.success ? 'completed' : 'failed');
+                    });
+                },
+                
+                // 执行搜索
+                async executeSearch(reset = true) {
+                    if (!this.searchQuery.trim() || this.isSearching) return;
+                    
+                    this.isSearching = true;
+                    this.hasSearched = true;
+                    
+                    if (reset) {
+                        this.currentOffset = 0;
+                        this.searchResults = [];
+                    }
+                    
+                    try {
+                        const response = await fetch('/api/query', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                query: this.searchQuery,
+                                session_id: this.sessionId,
+                                limit: parseInt(this.currentLimit),
+                                offset: this.currentOffset
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            if (reset) {
+                                this.searchResults = result.data.results;
+                            } else {
+                                this.searchResults = [...this.searchResults, ...result.data.results];
+                            }
+                            this.totalResults = result.data.total_count;
+                            this.executionTime = result.data.execution_time;
+                            this.queryIntent = result.data.intent;
+                            this.suggestedQueries = result.data.suggestions;
+                            this.sessionId = result.data.session_id;
+                            this.hasMore = result.data.has_more;
+                            this.currentFilters = result.data.filters;
+                            
+                            // 添加到历史
+                            if (!this.sessionHistory.includes(this.searchQuery)) {
+                                this.sessionHistory.push(this.searchQuery);
+                            }
+                        } else {
+                            alert('搜索失败: ' + result.error);
+                        }
+                    } catch (error) {
+                        console.error('搜索错误:', error);
+                        alert('搜索出错，请检查网络连接');
+                    } finally {
+                        this.isSearching = false;
+                        this.isLoadingMore = false;
+                    }
+                },
+                
+                // 加载更多数据
+                async loadMore() {
+                    if (this.isLoadingMore || !this.hasMore) return;
+                    
+                    this.isLoadingMore = true;
+                    this.currentOffset += parseInt(this.currentLimit);
+                    await this.executeSearch(false);
+                },
+                
+                // 改变每页显示数量
+                changeLimit(newLimit) {
+                    this.currentLimit = parseInt(newLimit);
+                    this.executeSearch(true);
+                },
+                
+                // 查看详情
+                viewDetail(result) {
+                    this.selectedDetail = result;
+                    this.showDetailModal = true;
+                },
+                
+                // 全选/取消全选
+                toggleSelectAll(event) {
+                    if (event.target.checked) {
+                        this.selectedResults = this.searchResults.map((_, idx) => idx);
+                    } else {
+                        this.selectedResults = [];
+                    }
+                },
+                
+                // 准备下载
+                prepareDownload() {
+                    if (this.selectedResults.length === 0) {
+                        alert('请先选择要下载的数据');
+                        return;
+                    }
+                    this.showDownloadModal = true;
+                },
+                
+                // 开始下载
+                async startDownload() {
+                    this.showDownloadModal = false;
+                    
+                    const selectedRecords = this.selectedResults.map(idx => this.searchResults[idx]);
+                    const fileTypes = [];
+                    if (this.downloadOptions.matrix) fileTypes.push('matrix');
+                    if (this.downloadOptions.raw) fileTypes.push('raw');
+                    if (this.downloadOptions.metadata) fileTypes.push('metadata');
+                    
+                    try {
+                        // 创建下载任务
+                        const response = await fetch('/api/download/tasks', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                records: selectedRecords,
+                                file_types: fileTypes
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            this.downloadTasks = [...this.downloadTasks, ...result.data.tasks];
+                            this.currentTab = 'download';
+                            
+                            // 启动下载
+                            const taskIds = result.data.tasks.map(t => t.task_id);
+                            fetch('/api/download/start', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ task_ids: taskIds })
+                            });
+                        }
+                    } catch (error) {
+                        console.error('创建下载任务失败:', error);
+                    }
+                },
+                
+                // 更新下载进度
+                updateDownloadProgress(data) {
+                    const task = this.downloadTasks.find(t => t.task_id === data.task_id);
+                    if (task) {
+                        task.progress = data.progress;
+                        task.speed = data.speed;
+                        task.status = 'downloading';
+                    }
+                },
+                
+                // 更新下载状态
+                updateDownloadStatus(taskId, status) {
+                    const task = this.downloadTasks.find(t => t.task_id === taskId);
+                    if (task) {
+                        task.status = status;
+                    }
+                },
+                
+                // 格式化速度
+                formatSpeed(speed) {
+                    if (!speed || speed === 0) return '';
+                    if (speed < 1024) return speed.toFixed(0) + ' B/s';
+                    if (speed < 1024 * 1024) return (speed / 1024).toFixed(2) + ' KB/s';
+                    return (speed / 1024 / 1024).toFixed(2) + ' MB/s';
+                },
+                
+                // 加载统计
+                async loadStatistics() {
+                    if (!this.statsField) return;
+                    
+                    try {
+                        const response = await fetch(`/api/statistics/${this.statsField}?top_n=20`);
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            this.statsData = result.data.statistics;
+                            this.statsTotal = this.statsData.reduce((sum, item) => sum + item.count, 0);
+                            this.renderChart();
+                        }
+                    } catch (error) {
+                        console.error('加载统计失败:', error);
+                    }
+                },
+                
+                // 渲染图表
+                renderChart() {
+                    const ctx = document.getElementById('statsChart');
+                    if (!ctx) return;
+                    
+                    if (this.statsChart) {
+                        this.statsChart.destroy();
+                    }
+                    
+                    const labels = this.statsData.map(item => item[this.statsField] || '(空)');
+                    const data = this.statsData.map(item => item.count);
+                    
+                    this.statsChart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels.slice(0, 10),
+                            datasets: [{
+                                label: '数量',
+                                data: data.slice(0, 10),
+                                backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                                borderColor: 'rgba(59, 130, 246, 1)',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: { precision: 0 }
+                                }
+                            }
+                        }
+                    });
+                },
+                
+                // 字段扩展
+                async expandField() {
+                    if (!this.newField.name || !this.newField.definition) return;
+                    
+                    this.isExpanding = true;
+                    
+                    try {
+                        const response = await fetch('/api/field/expand', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                field_name: this.newField.name,
+                                definition: this.newField.definition,
+                                criteria: this.newField.criteria,
+                                session_id: this.sessionId
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            alert('字段扩展成功！');
+                            this.newField = { name: '', definition: '', criteria: '' };
+                        } else {
+                            alert('字段扩展失败: ' + result.error);
+                        }
+                    } catch (error) {
+                        console.error('字段扩展错误:', error);
+                        alert('字段扩展出错');
+                    } finally {
+                        this.isExpanding = false;
+                    }
+                },
+                
+                // 导出当前页结果（CSV）
+                exportResults() {
+                    if (this.searchResults.length === 0) return;
+                    
+                    const headers = Object.keys(this.searchResults[0]);
+                    const csvContent = [
+                        headers.join(','),
+                        ...this.searchResults.map(row => 
+                            headers.map(h => {
+                                const val = row[h];
+                                if (val === null || val === undefined) return '';
+                                const str = String(val);
+                                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                                    return '"' + str.replace(/"/g, '""') + '"';
+                                }
+                                return str;
+                            }).join(',')
+                        )
+                    ].join('\n');
+                    
+                    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `search_results_${new Date().toISOString().slice(0, 10)}.csv`;
+                    link.click();
+                },
+                
+                // 导出所有查询结果（使用后端API）
+                async exportAllResults(format = 'csv') {
+                    if (!this.currentFilters || Object.keys(this.currentFilters).length === 0) {
+                        alert('请先执行查询');
+                        return;
+                    }
+                    
+                    try {
+                        const response = await fetch('/api/export/results', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                filters: this.currentFilters,
+                                format: format,
+                                max_records: 10000
+                            })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (result.success) {
+                            alert(`导出成功！共 ${result.data.record_count} 条记录\n文件名: ${result.data.filename}`);
+                            // 如果提供了下载链接，可以自动触发下载
+                            if (result.data.filepath) {
+                                console.log('文件已保存:', result.data.filepath);
+                            }
+                        } else {
+                            alert('导出失败: ' + result.error);
+                        }
+                    } catch (error) {
+                        console.error('导出错误:', error);
+                        alert('导出出错，请检查网络连接');
+                    }
+                },
+            }
+        }
+    </script>
+</body>
+</html>

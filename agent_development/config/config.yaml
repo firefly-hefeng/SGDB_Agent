@@ -1,0 +1,167 @@
+# AI配置
+ai:
+  # 主LLM - Kimi (Moonshot AI)
+  primary:
+    provider: "kimi"
+    api_key: "sk-UL5YodR7ZL4S9dytpfMWJgmPTXJjkeNSd7Ktq9bbEhElzDfX"
+    # 可选模型:
+    # - kimi-k2-turbo-preview : K2模型，256K上下文，高性能 (当前)
+    # - moonshot-v1-8k        : 8K上下文，速度快，成本低
+    # - moonshot-v1-32k       : 32K上下文，适合复杂查询
+    # - moonshot-v1-128k      : 128K上下文，适合超长文本分析
+    model: "kimi-k2-turbo-preview"
+    base_url: "https://api.moonshot.cn/v1"
+    timeout: 120                  # K2模型可能需要更长时间
+    
+  # 备用LLM - 当主LLM失败时切换
+  fallback:
+    provider: "kimi"              # 改为kimi作为备用，保持一致性
+    api_key: "sk-UL5YodR7ZL4S9dytpfMWJgmPTXJjkeNSd7Ktq9bbEhElzDfX"
+    model: "moonshot-v1-32k"      # 备用使用32K模型
+    base_url: "https://api.moonshot.cn/v1"
+    timeout: 120
+  
+  # LLM调用策略
+  strategy:
+    temperature: 0.1              # 低温度保证一致性
+    max_tokens: 4096              # Kimi最大支持4096输出
+    retry_attempts: 3
+    retry_delay: 2
+    # 模型选择建议:
+    # 默认使用: kimi-k2-turbo-preview (256K上下文)
+    # 备选: moonshot-v1-32k
+    # 备选: moonshot-v1-128k
+
+# 数据库配置
+database:
+  path: "data/scrnaseq.db"
+  table_name: "std"
+  enable_wal: true                # 启用WAL模式提升性能
+  cache_size: 10000               # 缓存大小（页数）
+  
+# 缓存配置
+cache:
+  enabled: true
+  backend: "redis"                # redis, memory
+  redis:
+    host: "localhost"
+    port: 6379
+    db: 0
+    password: ""
+    ttl: 3600                     # 查询缓存1小时
+  memory:
+    max_size: 1000                # 内存缓存最大条目数
+
+# 记忆系统配置
+memory:
+  # 工作记忆（短期）
+  working:
+    enabled: true
+    max_history: 10               # 保留最近10轮对话
+    session_timeout: 3600         # 会话超时1小时
+  
+  # 情景记忆（中期）
+  episodic:
+    enabled: false                # 默认关闭，按需启用
+    storage: "sqlite"             # sqlite, redis
+    db_path: "data/episodic_memory.db"
+  
+  # 语义记忆（长期）
+  semantic:
+    enabled: true
+    storage: "sqlite"
+    db_path: "data/semantic_memory.db"
+    update_frequency: "weekly"    # 更新频率
+
+# 字段扩展配置
+field_expansion:
+  # 采样验证
+  sampling:
+    size: 100                     # 采样数量
+    min_accuracy: 0.90            # 最低准确率要求
+  
+  # 批量推理
+  batch:
+    size: 20                      # 每批处理数量
+    concurrency: 5                # 并发数
+    enable_cache: true            # 启用缓存复用
+  
+  # 质量控制
+  quality:
+    confidence_threshold: 0.9     # 置信度阈值
+    manual_review_rate: 0.1       # 人工抽检比例
+  
+  # 字段推广策略
+  promotion:
+    usage_threshold: 10           # 使用次数阈值
+    auto_promote: false           # 是否自动推广到全库
+
+# 检索配置
+retrieval:
+  default_limit: 20
+  max_limit: 1000
+  enable_pagination: true
+  
+  # 结果优化
+  ranking:
+    factors:
+      citation_count: 0.3
+      publication_date: 0.2
+      data_open: 0.5
+
+# 导出配置
+export:
+  default_format: "csv"
+  output_dir: "results"
+  max_records: 100000
+  
+# 日志配置
+logging:
+  level: "INFO"
+  file: "logs/scdb_agent.log"
+  max_bytes: 10485760
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+# 监控配置
+monitoring:
+  enabled: true
+  metrics:
+    - query_latency
+    - llm_calls
+    - cache_hit_rate
+    - error_rate
+  
+# 数据下载配置
+download:
+  # 下载目录
+  download_dir: "data/downloads"
+  
+  # 并发下载设置
+  max_concurrent_downloads: 3        # 最大并发下载数
+  retry_attempts: 3                  # 失败重试次数
+  
+  # 下载参数
+  timeout: 300                       # 单次下载超时（秒）
+  chunk_size: 8192                   # 下载块大小（字节）
+  
+  # 安全限制
+  max_single_file_size: 10737418240  # 单个文件最大10GB
+  require_confirmation: true         # 下载前需要确认
+  
+  # 数据库特定配置
+  geo:
+    ftp_host: "ftp.ncbi.nlm.nih.gov"
+    use_https_fallback: true
+  
+  cellxgene:
+    api_base: "https://api.cellxgene.cziscience.com"
+    
+  sra:
+    prefetch_path: "prefetch"        # sra-toolkit路径
+    fasterq_dump_path: "fasterq-dump"
+
+# 测试配置
+testing:
+  test_data_path: "tests/data"
+  enable_mock_llm: false
