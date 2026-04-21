@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: >-
+  If you use this portal or the unified scRNA-seq metadata catalog in
+  your research, please cite it as below. A formal publication is
+  planned; until then please cite the software repository directly.
+title: "SCeQTL Portal (SGDB) — A unified search and discovery portal for single-cell RNA-seq metadata"
+type: software
+version: "3.0.0"
+date-released: "2026-05-15"
+license: MIT
+url: "https://github.com/firefly-hefeng/SGDB_Agent"
+repository-code: "https://github.com/firefly-hefeng/SGDB_Agent"
+abstract: >-
+  SCeQTL Portal unifies 943,732 human single-cell RNA-seq samples from
+  8 curated sources (GEO, EGA, NCBI, EBI, CellxGene, PsychAD, HTAN, HCA)
+  into a single ontology-aligned catalog. The portal pairs an offline
+  curated search with a live cross-database discovery agent that fans a
+  single natural-language query out to 6 federated databases — GEO, SRA,
+  EBI BioStudies, Single-Cell Expression Atlas (SCEA), CellxGene, HCA —
+  in parallel, deduplicates the results, and returns them as SSE.
+keywords:
+  - single-cell RNA-seq
+  - metadata
+  - ontology
+  - faceted search
+  - scientific data portal
+  - cross-database discovery
+authors:
+  # Author list will be finalised when a peer-reviewed publication is
+  # prepared. The repo owner is the current maintainer.
+  - given-names: "hefeng"
+    family-names: "(firefly-hefeng)"
