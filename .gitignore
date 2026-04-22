@@ -1,0 +1,63 @@
+# Environment and secrets
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Playwright e2e (Phase 33): regenerated run output + HTML report.
+# The browser binaries live in ~/.cache/ms-playwright (outside the repo).
+web/test-results/
+web/playwright-report/
+web/.playwright/
+# Leaked Windows Chromium/lighthouse profile dirs (literal "C:\..." names)
+web/C:\\*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Build artifacts
+web/dist/
+
+# Data files (large)
+*.db
+data/ontologies/*.db
+data/memory/
+
+# Benchmark results (regenerated)
+tests/benchmark/results/
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+.claude/
