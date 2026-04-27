@@ -1,0 +1,210 @@
+name: Quality
+
+on:
+  push:
+    branches: [main, phase*]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend — pytest
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install
+        run: pip install -e ".[dev,ontology]"
+
+      - name: Tests
+        run: python -m pytest tests/unit/ -q --tb=line
+        # The unified database isn't checked in; tests that need it are
+        # already skipped or mock the DAL. The 481-test suite passes
+        # without a database mounted.
+
+  frontend:
+    name: Frontend — vitest + tsc + build + lint
+    runs-on: ubuntu-22.04
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm run lint
+
+      - run: npx vitest run
+
+      - run: npm run build
+        # vite build is the strictest gate — TS strict mode + tree-shaking
+        # surface things tsc alone doesn't.
+
+      - name: Bundle-size guard
+        run: |
+          MAIN_KB=$(du -k dist/assets/js/index-*.js | cut -f1)
+          if [ "$MAIN_KB" -gt 280 ]; then
+            echo "::error::Main bundle is ${MAIN_KB} kB (limit 280)."
+            exit 1
+          fi
+          echo "Main bundle: ${MAIN_KB} kB (under 280 limit)"
+
+  e2e:
+    name: Browser walkthrough + a11y + Lighthouse
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    needs: [backend, frontend]
+    # End-to-end run requires the unified DB. Self-hosted runners or a
+    # scheduled main-branch nightly is the right home; pull requests
+    # would otherwise be gated on a 1 GB fixture download.
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'run-e2e')
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install backend
+        run: pip install -e ".[dev,ontology]"
+
+      - name: Install frontend
+        working-directory: web
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Fetch unified DB
+        # TODO(human): wire up the actual DB artefact. Options:
+        #   - download a release artefact: gh release download v3-data --pattern "*.db"
+        #   - rsync from a self-hosted runner with the DB already mounted
+        #   - skip e2e and rely on the offline suites
+        run: |
+          mkdir -p ../database_development/unified_db
+          if [ -z "${DB_FIXTURE_URL:-}" ]; then
+            echo "DB_FIXTURE_URL not set — skipping e2e job."
+            echo "skip=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          curl -sL "$DB_FIXTURE_URL" -o ../database_development/unified_db/human_metadata.db
+        id: db
+        env:
+          DB_FIXTURE_URL: ${{ secrets.DB_FIXTURE_URL }}
+
+      - name: Build frontend
+        if: steps.db.outputs.skip != 'true'
+        working-directory: web
+        run: npm run build
+
+      - name: Start backend
+        if: steps.db.outputs.skip != 'true'
+        run: |
+          nohup python run_server.py --port 8000 > /tmp/server.log 2>&1 &
+          # Wait up to 3 minutes for the DAL + ontology + prewarm to load.
+          for i in {1..60}; do
+            if curl -sf http://localhost:8000/scdbAPI/health > /dev/null; then
+              echo "Backend ready in ${i}*3 seconds."
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "::error::Backend did not become healthy."
+          tail -50 /tmp/server.log
+          exit 1
+
+      - name: Start preview
+        if: steps.db.outputs.skip != 'true'
+        working-directory: web
+        run: |
+          nohup npx vite preview --port 5173 --strictPort > /tmp/preview.log 2>&1 &
+          for i in {1..30}; do
+            if curl -sf http://localhost:5173/singledb/ > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::Preview did not start."
+          exit 1
+
+      - name: Browser walkthrough (11 routes)
+        if: steps.db.outputs.skip != 'true'
+        working-directory: web
+        run: node scripts/browser-walkthrough.mjs
+
+      - name: Interaction walkthrough (7 flows)
+        if: steps.db.outputs.skip != 'true'
+        working-directory: web
+        run: node scripts/interaction-walkthrough.mjs
+
+      - name: A11y audit
+        if: steps.db.outputs.skip != 'true'
+        working-directory: web
+        run: |
+          node scripts/a11y-walkthrough.mjs
+          # Fail if any route has axe violations.
+          node -e "
+            const r = JSON.parse(require('fs').readFileSync('/tmp/a11y/report.json','utf8'));
+            const fail = r.filter(p => (p.violationCount||0) > 0);
+            if (fail.length) {
+              for (const p of fail) console.log(p.name, p.violations);
+              process.exit(1);
+            }
+          "
+
+      - name: Lighthouse
+        if: steps.db.outputs.skip != 'true'
+        working-directory: web
+        run: |
+          node scripts/lighthouse-baseline.mjs > /tmp/lh.log
+          # Fail if any score drops below 90 (one rebuild buffer below
+          # the 96-100 production baseline).
+          node -e "
+            const r = JSON.parse(require('fs').readFileSync('/tmp/lighthouse/summary.json','utf8'));
+            const fail = r.filter(p =>
+              p.performance < 90 || p.accessibility < 90 ||
+              p.best_practices < 90 || p.seo < 90
+            );
+            if (fail.length) {
+              for (const p of fail) console.log(p);
+              process.exit(1);
+            }
+          "
+
+      - name: Upload reports
+        if: always() && steps.db.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-reports
+          path: |
+            /tmp/walkthrough/
+            /tmp/interaction/
+            /tmp/a11y/
+            /tmp/lighthouse/
