@@ -1,0 +1,64 @@
+# Agent V3 Configuration
+# API keys should be set via environment variables or .env file
+
+llm:
+  kimi_api_key: ""  # Set via KIMI_API_KEY env var or .env file
+  primary_provider: "kimi"
+  # Phase 27: turbo variant — k2.6 (thinking model) takes 90-150s/call and is
+  # unusable interactively; turbo gives equivalent parses in ~1-2s.
+  primary_model: "kimi-k2-turbo-preview"
+  kimi_base_url: "https://api.moonshot.cn/v1"
+  temperature: 1.0
+  max_tokens: 4096
+  request_timeout: 120
+
+database:
+  # Switched 2026-05-10: human-only curated DB (Phase 16).
+  # `unified_samples` / `unified_series` / `unified_projects` /
+  # `unified_celltypes` are now SQL views aliasing the underlying
+  # `human_*` tables, so no agent code change is required.
+  db_path: "../database_development/unified_db/human_metadata.db"
+  pool_size: 8
+
+knowledge:
+  schema_path: "data/schema_knowledge.yaml"
+
+# 动态知识层配置 (NEW)
+knowledge_layer:
+  enabled: true
+  cache_ttl_minutes: 30
+  stats_sample_size: 10000
+  histogram_top_n: 20
+
+  cardinality_estimation:
+    enabled: true
+    default_selectivity: 0.3
+    large_result_threshold: 10000
+    auto_limit_adjustment: true
+
+  feedback_loop:
+    enabled: true
+    retention_days: 30
+
+# SQL生成增强配置 (NEW)
+sql_generation:
+  strategies:
+    template: true
+    rule_based: true
+    llm_enhanced: true
+    contextual: true
+
+  validation:
+    enabled: true
+    syntax_check: true
+    injection_check: true
+
+  subquery:
+    enable_exists: true
+    enable_in_subquery: true
+    max_depth: 2
+
+  complex_query:
+    enable_celltype_filter: true
+    enable_multi_field_agg: true
+    enable_having_clause: true
