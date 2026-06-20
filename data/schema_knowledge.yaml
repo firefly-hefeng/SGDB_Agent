@@ -1,0 +1,1713 @@
+version: '2.1'
+generated_at: '2026-06-15T06:00:00Z'
+stats:
+  total_samples: 943732
+  total_projects: 16376
+  total_series: 14110
+  total_sources: 8
+  source_databases:
+  - name: geo
+    sample_count: 342328
+  - name: ega
+    sample_count: 253073
+  - name: ncbi
+    sample_count: 217513
+  - name: ebi
+    sample_count: 94255
+  - name: cellxgene
+    sample_count: 33984
+  - name: psychad
+    sample_count: 1494
+  - name: htan
+    sample_count: 942
+  - name: hca
+    sample_count: 143
+fields:
+  tissue:
+    semantic_type: tissue
+    table: unified_samples
+    distinct_count: 18147
+    null_pct: 2.9
+    top_values:
+    - value: blood
+      count: 22964
+    - value: PBMC
+      count: 16036
+    - value: liver
+      count: 13936
+    - value: bone marrow
+      count: 12820
+    - value: Blood
+      count: 12522
+    - value: dermis
+      count: 11713
+    - value: breast
+      count: 11021
+    - value: Malignant ascites  single cell
+      count: 10906
+    - value: skin
+      count: 10451
+    - value: melanoma tumor
+      count: 10384
+    - value: LCL-derived iPSC
+      count: 10186
+    - value: inlet cells
+      count: 9600
+    - value: decidua
+      count: 7783
+    - value: Peripheral blood
+      count: 7017
+    - value: spleen
+      count: 6591
+    - value: Tumor
+      count: 6566
+    - value: astrocytoma single cell
+      count: 6441
+    - value: inner cell mass
+      count: 6236
+    - value: pancreas
+      count: 6111
+    - value: human fallopian tube
+      count: 6021
+    - value: Head and neck cancer single cell
+      count: 6001
+    - value: h1930004
+      count: 5474
+    - value: lung
+      count: 5379
+    - value: brain
+      count: 5343
+    - value: h1930001
+      count: 5216
+    - value: oligodendroglioma single cell
+      count: 4925
+    - value: cultured embryonic stem cells
+      count: 4796
+    - value: Psoriasis lesion
+      count: 4716
+    - value: lymph node
+      count: 4713
+    - value: h1930002
+      count: 4663
+    - value: peripheral blood
+      count: 4559
+    - value: middle temporal gyrus
+      count: 4372
+    - value: Bone Marrow
+      count: 4067
+    - value: dorsolateral prefrontal cortex
+      count: 4022
+    - value: Glioma single cell
+      count: 3920
+    - value: kidney
+      count: 3883
+    - value: Kidney
+      count: 3854
+    - value: stomach
+      count: 3854
+    - value: 40 year old female
+      count: 3819
+    - value: Bone marrow
+      count: 3711
+    - value: whole organism
+      count: 3613
+    - value: shoulder
+      count: 3462
+    - value: Islet-reactive CD4+ sorted T-cell
+      count: 3443
+    - value: embryo
+      count: 3342
+    - value: Lung
+      count: 3142
+    - value: Pancreatic islets
+      count: 3065
+    - value: PBMCs
+      count: 3005
+    - value: CD4 T cell
+      count: 2998
+    - value: Resected tumors
+      count: 2950
+    - value: Pancreatic islet
+      count: 2922
+    - value: blood component
+      count: 2773
+    - value: Healthy skin
+      count: 2688
+    - value: colon
+      count: 2478
+    - value: Brain
+      count: 2450
+    - value: iPSC derived RPE cell
+      count: 2394
+    - value: huh7
+      count: 2260
+    - value: mobilised peripheral blood
+      count: 2248
+    - value: tumor
+      count: 2173
+    - value: endometrium biopsy
+      count: 2158
+    - value: large intestine
+      count: 2151
+    - value: heart
+      count: 2117
+    - value: patient-derived-xenograft
+      count: 2090
+    - value: ventral midbrain
+      count: 2056
+    - value: Liver
+      count: 2053
+    - value: renal biopsies
+      count: 2022
+    - value: H9
+      count: 1905
+    - value: Fetal pancreas
+      count: 1860
+    - value: frontal cortex
+      count: 1839
+    - value: BT869
+      count: 1826
+    - value: neocortex
+      count: 1820
+    - value: Skin
+      count: 1787
+    - value: stem cells
+      count: 1772
+    - value: Dermal fibroblasts differentiated into iPS cells
+      count: 1704
+    - value: thymus
+      count: 1701
+    - value: NSCLC
+      count: 1574
+    - value: ovary
+      count: 1560
+    - value: Metastases
+      count: 1541
+    - value: inguinal lymph node
+      count: 1535
+    - value: fat body
+      count: 1518
+    - value: human melanoma
+      count: 1504
+    - value: IMR90 fibroblast
+      count: 1455
+    - value: K562
+      count: 1432
+    - value: esophagus
+      count: 1384
+    - value: colorectum
+      count: 1369
+    - value: Peripheral blood mononuclear cells
+      count: 1351
+    - value: tonsil
+      count: 1330
+    - value: NSG spleen
+      count: 1319
+    - value: CRC
+      count: 1300
+    - value: hiPSC-derived Cardiomyocytes
+      count: 1285
+    - value: cell line
+      count: 1230
+    - value: Pancreas
+      count: 1209
+    - value: Peripheral Blood
+      count: 1202
+    - value: Neuronal epithelium
+      count: 1156
+    - value: peripheral blood mononuclear cells
+      count: 1156
+    - value: IMR90
+      count: 1154
+    - value: embryonic RPE cell
+      count: 1152
+    - value: cord blood
+      count: 1150
+    - value: HEK293
+      count: 1142
+    - value: gut
+      count: 1089
+    - value: retinal organoid
+      count: 1084
+    ontology_source: UBERON
+    known_synonyms:
+      brain:
+      - 大脑
+      - 脑
+      - cerebral
+      - cerebrum
+      blood:
+      - 血液
+      - 外周血
+      - PBMC
+      - whole blood
+      - peripheral blood
+      liver:
+      - 肝
+      - 肝脏
+      - hepatic
+      lung:
+      - 肺
+      - 肺部
+      - pulmonary
+      heart:
+      - 心脏
+      - 心
+      - cardiac
+      - myocardial
+      kidney:
+      - 肾
+      - 肾脏
+      - renal
+      skin:
+      - 皮肤
+      - dermis
+      - epidermis
+      intestine:
+      - 肠
+      - 肠道
+      - gut
+      - colon
+      - bowel
+      pancreas:
+      - 胰腺
+      - pancreatic
+      bone marrow:
+      - 骨髓
+      breast:
+      - 乳腺
+      - mammary
+      eye:
+      - 眼
+      - 视网膜
+      - retina
+      - retinal
+      stomach:
+      - 胃
+      - gastric
+      spleen:
+      - 脾脏
+      - 脾
+      muscle:
+      - 肌肉
+      - skeletal muscle
+      placenta:
+      - 胎盘
+      - placental
+      adipose tissue:
+      - 脂肪
+      - adipose
+      - fat tissue
+      lymph node:
+      - 淋巴结
+      - lymph
+      thyroid:
+      - 甲状腺
+      prostate:
+      - 前列腺
+      ovary:
+      - 卵巢
+      - ovarian
+      testis:
+      - 睾丸
+      - testes
+  disease:
+    semantic_type: disease
+    table: unified_samples
+    distinct_count: 3742
+    null_pct: 70.6
+    top_values:
+    - value: normal
+      count: 88229
+    - value: cancer
+      count: 9403
+    - value: COVID-19
+      count: 4100
+    - value: IgAN
+      count: 2754
+    - value: Healthy
+      count: 2731
+    - value: Bloom syndrome
+      count: 2263
+    - value: melanoma
+      count: 2142
+    - value: myelofibrosis
+      count: 2120
+    - value: dementia
+      count: 2069
+    - value: T2D
+      count: 1834
+    - value: Control
+      count: 1686
+    - value: NT
+      count: 1575
+    - value: type II diabetes mellitus
+      count: 1574
+    - value: oral squamous cell carcinoma (OSCC)
+      count: 1529
+    - value: healthy
+      count: 1481
+    - value: acute myeloid leukaemia
+      count: 1378
+    - value: Carcinoma
+      count: 1298
+    - value: control
+      count: 1241
+    - value: Crohn's disease
+      count: 1159
+    - value: acute myeloid leukemia
+      count: 1144
+    - value: Alzheimers disease
+      count: 1027
+    - value: healthy control
+      count: 963
+    - value: Tumor screening
+      count: 956
+    - value: hepatocellular carcinoma
+      count: 892
+    - value: kidney cancer
+      count: 763
+    - value: patients with bone marrow failure and cytogenetic abnormalities
+      count: 729
+    - value: lung adenocarcinoma
+      count: 705
+    - value: IPF
+      count: 700
+    - value: glioblastoma
+      count: 654
+    - value: T1D
+      count: 615
+    - value: colorectal adenoma
+      count: 608
+    - value: rheumatoid arthritis
+      count: 603
+    - value: ActiveEOE
+      count: 584
+    - value: bone marrow cells from healthy donors
+      count: 573
+    - value: colon adenocarcinoma
+      count: 564
+    - value: patients with dilated cardiomyopathy
+      count: 560
+    - value: T-cell acute lymphoblastic leukemia
+      count: 539
+    - value: colorectal cancer
+      count: 534
+    - value: HIV infection
+      count: 521
+    - value: GFP+PD-
+      count: 510
+    - value: ND
+      count: 504
+    - value: Normal
+      count: 496
+    - value: acute monocytic leukemia
+      count: 490
+    - value: DIPG (diffuse intrinsic pontine glioma)
+      count: 484
+    - value: breast cancer
+      count: 482
+    - value: leukemia
+      count: 478
+    - value: HIV
+      count: 470
+    - value: Healthy Primary PBMCs
+      count: 469
+    - value: dilated cardiomyopathy
+      count: 468
+    - value: Parkinson's disease
+      count: 463
+    - value: GFP-
+      count: 428
+    - value: gastric cancer
+      count: 421
+    - value: colorectal adenocarcinoma
+      count: 409
+    - value: cytomegalovirus infection
+      count: 404
+    - value: Non-Diabetic
+      count: 391
+    - value: tumor
+      count: 385
+    - value: tonsilitis
+      count: 384
+    - value: systemic lupus erythematosus
+      count: 378
+    - value: metastatic colorectal cancer
+      count: 374
+    - value: 1.0; 1.0
+      count: 367
+    - value: dementia || Alzheimer disease
+      count: 367
+    - value: RDEB
+      count: 350
+    - value: T
+      count: 346
+    - value: Healthy donor
+      count: 342
+    - value: PDAC
+      count: 329
+    - value: Melanoma
+      count: 328
+    - value: cervical carcinoma
+      count: 324
+    - value: Cutaneous T-cell lymphoma
+      count: 322
+    - value: invasive ductal breast carcinoma
+      count: 322
+    - value: Remission
+      count: 318
+    - value: baseline
+      count: 316
+    - value: CD
+      count: 312
+    - value: prostate cancer
+      count: 311
+    - value: ovarian cancer
+      count: 308
+    - value: OA
+      count: 300
+    - value: Crohn disease
+      count: 298
+    - value: Prostatic Neoplasms
+      count: 298
+    - value: wild-type control
+      count: 293
+    - value: isogenic control
+      count: 292
+    - value: myeloprolifertive disease
+      count: 292
+    - value: Tumor
+      count: 280
+    - value: non-small cell lung cancer
+      count: 280
+    - value: acute myeloid leukemia (AML)
+      count: 278
+    - value: Multiple Myeloma
+      count: 276
+    - value: PRMM
+      count: 274
+    - value: GFP-PD-
+      count: 266
+    - value: RA
+      count: 265
+    - value: SLE
+      count: 265
+    - value: obesity
+      count: 265
+    - value: Type 2 Diabetic
+      count: 258
+    - value: Healthy control
+      count: 250
+    - value: Myeloid Leukemia Associated with Down Syndrome
+      count: 249
+    - value: healthy donor
+      count: 248
+    - value: AF
+      count: 245
+    - value: Acute promyelocytic leukemia
+      count: 242
+    - value: SR
+      count: 239
+    - value: prostatic acinar adenocarcinoma
+      count: 239
+    - value: '1.0'
+      count: 238
+    - value: Alzheimer disease
+      count: 237
+    - value: Ctrl
+      count: 236
+    ontology_source: MONDO
+    known_synonyms:
+      normal:
+      - 正常
+      - 健康
+      - 对照
+      - healthy
+      - control
+      cancer:
+      - 癌
+      - 肿瘤
+      - 恶性
+      - tumor
+      - carcinoma
+      - malignant
+      - neoplasm
+      Alzheimer's disease:
+      - 阿尔茨海默
+      - 老年痴呆
+      - alzheimer
+      - AD
+      COVID-19:
+      - 新冠
+      - covid
+      - sars-cov-2
+      - coronavirus
+      diabetes:
+      - 糖尿病
+      - diabetic
+      fibrosis:
+      - 纤维化
+      - fibrotic
+      hepatocellular carcinoma:
+      - 肝癌
+      - 肝细胞癌
+      - HCC
+      lung cancer:
+      - 肺癌
+      - NSCLC
+      - SCLC
+      breast cancer:
+      - 乳腺癌
+      colorectal cancer:
+      - 结直肠癌
+      - colon cancer
+      leukemia:
+      - 白血病
+      - AML
+      - CLL
+      - ALL
+      melanoma:
+      - 黑色素瘤
+      glioblastoma:
+      - 胶质母细胞瘤
+      - GBM
+      Parkinson's disease:
+      - 帕金森
+      - parkinson
+  cell_type:
+    semantic_type: cell_type
+    table: unified_samples
+    distinct_count: 6546
+    null_pct: 46.5
+    top_values:
+    - value: mixed
+      count: 22150
+    - value: Malignant ascites  single cell
+      count: 10906
+    - value: fibroblast
+      count: 10457
+    - value: PBMC
+      count: 9888
+    - value: hepatocyte
+      count: 7969
+    - value: CD8+ T cell
+      count: 7877
+    - value: embryonic stem cell
+      count: 6471
+    - value: fibroblast of dermis
+      count: 6267
+    - value: Peripherial blood mononuclear cells
+      count: 5430
+    - value: KIR+ CD8 T
+      count: 4612
+    - value: T cell
+      count: 4297
+    - value: normal fallopian tube cells
+      count: 4067
+    - value: Invasive Ductal Carcinoma
+      count: 3819
+    - value: induced pluripotent stem cell
+      count: 3717
+    - value: splenocyte
+      count: 3651
+    - value: RPE
+      count: 3629
+    - value: oligodendroglioma single cell
+      count: 3352
+    - value: T cells
+      count: 3244
+    - value: blood cell
+      count: 3201
+    - value: epithelial cell
+      count: 3177
+    - value: CD45+CD3+ T cells
+      count: 3114
+    - value: PBMCs
+      count: 3078
+    - value: CD4 T cell
+      count: 3077
+    - value: CD4-positive, alpha-beta T cell
+      count: 3027
+    - value: cancer cells
+      count: 3010
+    - value: endothelial cell
+      count: 3010
+    - value: mammary gland epithelial cell
+      count: 2981
+    - value: cd34+ HSPC
+      count: 2898
+    - value: naive thymus-derived CD4-positive, alpha-beta T cell
+      count: 2881
+    - value: Early_Ectoderm
+      count: 2590
+    - value: CD3+ T cells
+      count: 2527
+    - value: LCL-derived iPSC
+      count: 2502
+    - value: dendritic cells and monocytes
+      count: 2336
+    - value: CD4-positive, CD25-positive, alpha-beta regulatory T cell
+      count: 2328
+    - value: neuron
+      count: 2251
+    - value: tumor
+      count: 2145
+    - value: Mal
+      count: 2001
+    - value: primary hematopoietic cells
+      count: 1839
+    - value: H3.3K27M-glioma
+      count: 1826
+    - value: Epithelial
+      count: 1788
+    - value: T.CD8
+      count: 1777
+    - value: iPSC-derived neuron
+      count: 1704
+    - value: effector memory CD4-positive, alpha-beta T cell
+      count: 1678
+    - value: HSC
+      count: 1661
+    - value: cancer cell
+      count: 1438
+    - value: CD4+ T cell
+      count: 1390
+    - value: Pluripotent_Cells
+      count: 1354
+    - value: hiPSC-derived cardiomyocytes
+      count: 1291
+    - value: L2/3-6 intratelencephalic projecting glutamatergic neuron
+      count: 1255
+    - value: EBV-transformed B-lymphocyte
+      count: 1246
+    - value: peripheral blood mononuclear cells
+      count: 1203
+    - value: epithelial cell of stomach
+      count: 1152
+    - value: CD8-positive, alpha-beta T cell
+      count: 1122
+    - value: mononuclear cell
+      count: 1121
+    - value: human embryonic stem cells
+      count: 1120
+    - value: cardiomyocyte
+      count: 1101
+    - value: RC17
+      count: 1087
+    - value: IMR90 fibroblast
+      count: 1075
+    - value: Human Donor Islet Cell
+      count: 1058
+    - value: CD4 T cells
+      count: 1015
+    - value: memory B cells
+      count: 989
+    - value: CD4-positive, alpha-beta memory T cell
+      count: 986
+    - value: CD34+
+      count: 981
+    - value: monocytes
+      count: 963
+    - value: Primary
+      count: 941
+    - value: Fibroblast
+      count: 935
+    - value: B cell
+      count: 906
+    - value: alpha cell
+      count: 886
+    - value: CD154+CD69+ CD4 T cells
+      count: 877
+    - value: primary skin fibroblast
+      count: 872
+    - value: HEK293
+      count: 871
+    - value: pericytes or pericyte-derived induced neuronal cells
+      count: 870
+    - value: oral squamous cell carcinoma (OSCC) cell line
+      count: 868
+    - value: T.CD4
+      count: 863
+    - value: Islet TMR+ CD8 T cells
+      count: 848
+    - value: plasmacytoid dendritic cell
+      count: 839
+    - value: LT-HSCs
+      count: 833
+    - value: Hematopoietic Stem Cells (HSCs)
+      count: 830
+    - value: B.cell
+      count: 821
+    - value: epithelial cell line
+      count: 805
+    - value: Hematopoietic Stem Cells
+      count: 775
+    - value: Glioblastoma
+      count: 768
+    - value: lymph node macrophage
+      count: 765
+    - value: adult insulin secreting cell of pars intercerebralis
+      count: 764
+    - value: Foreskin Human Fibroblasts
+      count: 758
+    - value: oenocyte
+      count: 752
+    - value: Peripheral blood mononuclear cells
+      count: 747
+    - value: Cardiomyocytes
+      count: 744
+    - value: Spermatogonium
+      count: 735
+    - value: CD45+CD3+CD8+CD103plus/minus
+      count: 732
+    - value: K562
+      count: 723
+    - value: iPSC
+      count: 719
+    - value: Akh secreting cell
+      count: 716
+    - value: hESC
+      count: 716
+    - value: Multiple myeloma
+      count: 712
+    - value: T.cell
+      count: 711
+    - value: primary T-ALL cell
+      count: 708
+    - value: dropped
+      count: 685
+    - value: epiblast cell
+      count: 675
+    - value: Prostate cancer cell line
+      count: 672
+    ontology_source: CL
+    known_synonyms:
+      T cell:
+      - T细胞
+      - t-cell
+      - CD4
+      - CD8
+      B cell:
+      - B细胞
+      - b-cell
+      macrophage:
+      - 巨噬细胞
+      neutrophil:
+      - 中性粒细胞
+      fibroblast:
+      - 成纤维细胞
+      epithelial cell:
+      - 上皮细胞
+      - epithelial
+      endothelial cell:
+      - 内皮细胞
+      - endothelial
+      neuron:
+      - 神经元
+      - neuronal
+      astrocyte:
+      - 星形胶质细胞
+      hepatocyte:
+      - 肝细胞
+      NK cell:
+      - NK细胞
+      - natural killer
+      dendritic cell:
+      - 树突状细胞
+      - DC
+      monocyte:
+      - 单核细胞
+      stem cell:
+      - 干细胞
+  assay:
+    semantic_type: assay
+    table: unified_series
+    distinct_count: 43
+    null_pct: 90.8
+    top_values:
+    - value: 10x 3' v3
+      count: 599
+    - value: 10x 3' v2
+      count: 330
+    - value: 10xv2
+      count: 132
+    - value: smart-seq2
+      count: 82
+    - value: 10xv3
+      count: 58
+    - value: smart-like
+      count: 44
+    - value: 10x 5' v1
+      count: 41
+    - value: 10x 3' v1
+      count: 29
+    - value: 10x multiome
+      count: 22
+    - value: drop-seq
+      count: 21
+    - value: 10x5prime
+      count: 14
+    - value: ''
+      count: 12
+    - value: 10x 3' transcription profiling
+      count: 8
+    - value: 10x 5' v2
+      count: 7
+    - value: 10xv3; 10xv2
+      count: 6
+    - value: 10xv2; 10xv3
+      count: 6
+    - value: 10x gene expression flex
+      count: 5
+    - value: Smart-seq2
+      count: 4
+    - value: BD Rhapsody Whole Transcriptome Analysis
+      count: 4
+    - value: 10xv2; 10x5prime
+      count: 4
+    - value: sci-RNA-seq3
+      count: 3
+    - value: particle-templated instant partition sequencing
+      count: 3
+    - value: TruDrop
+      count: 3
+    - value: Seq-Well
+      count: 3
+    - value: BD Rhapsody Targeted mRNA
+      count: 3
+    - value: 10x 5' transcription profiling
+      count: 3
+    - value: seq-well
+      count: 2
+    - value: ScaleBio single cell RNA sequencing
+      count: 2
+    - value: HIVE CLX Single-Cell RNAseq Solution
+      count: 2
+    - value: Drop-seq
+      count: 2
+    - value: CEL-seq2
+      count: 2
+    - value: Asteria scRNA-seq kit
+      count: 2
+    - value: modified STRT-seq
+      count: 1
+    - value: microwell-seq
+      count: 1
+    - value: mCT-seq
+      count: 1
+    - value: Smart-seq v4
+      count: 1
+    - value: Seq-Well S3
+      count: 1
+    - value: SPLiT-seq
+      count: 1
+    - value: Parse Evercode Whole Transcriptome v2
+      count: 1
+    - value: MARS-seq
+      count: 1
+    - value: CEL-seq
+      count: 1
+    - value: 10xv1; 10xv2; 10xv3; 10x5prime
+      count: 1
+    - value: 10x5prime; 10xv2
+      count: 1
+    ontology_source: EFO
+    known_synonyms:
+      10x 3' v3:
+      - 10x
+      - 10x chromium
+      - chromium
+      Smart-seq2:
+      - smart-seq
+      - smartseq
+      Drop-seq:
+      - drop-seq
+      - dropseq
+      CITE-seq:
+      - cite-seq
+      - citeseq
+      Visium:
+      - visium
+      - spatial
+  organism:
+    semantic_type: organism
+    table: unified_samples
+    distinct_count: 46
+    null_pct: 0.0
+    top_values:
+    - value: Homo sapiens
+      count: 690245
+    - value: Mus musculus
+      count: 38686
+    - value: Drosophila melanogaster
+      count: 13361
+    - value: Danio rerio
+      count: 4718
+    - value: Mus musculus domesticus
+      count: 3264
+    - value: Macaca fascicularis
+      count: 1492
+    - value: Gorilla gorilla
+      count: 934
+    - value: Mus musculus castaneus
+      count: 768
+    - value: Pan troglodytes
+      count: 617
+    - value: Rattus norvegicus
+      count: 504
+    - value: mixed sample
+      count: 402
+    - value: Oryctolagus cuniculus
+      count: 394
+    - value: Macaca mulatta
+      count: 326
+    - value: Callithrix jacchus
+      count: 200
+    - value: Sus scrofa
+      count: 192
+    - value: Pongo abelii
+      count: 103
+    - value: Pan paniscus
+      count: 89
+    - value: Macaca nemestrina
+      count: 65
+    - value: Gallus gallus
+      count: 22
+    - value: Monodelphis domestica
+      count: 18
+    - value: Ornithorhynchus anatinus
+      count: 18
+    - value: Human alphaherpesvirus 1
+      count: 16
+    - value: human gammaherpesvirus 4
+      count: 16
+    - value: synthetic construct
+      count: 16
+    - value: Homo sapiens + Saccharomyces cerevisiae
+      count: 14
+    - value: Plasmodium falciparum
+      count: 9
+    - value: Arabidopsis thaliana
+      count: 8
+    - value: Caenorhabditis elegans
+      count: 8
+    - value: Homo sapiens + Aspergillus fumigatus
+      count: 8
+    - value: Candida albicans
+      count: 7
+    - value: Saccharomyces cerevisiae
+      count: 7
+    - value: Aspergillus fumigatus
+      count: 6
+    - value: Homo sapiens + Candida parapsilosis
+      count: 6
+    - value: Bos taurus
+      count: 4
+    - value: Ceratotherium simum
+      count: 4
+    - value: Human herpesvirus 5 strain Merlin
+      count: 3
+    - value: Schistosoma mansoni
+      count: 3
+    - value: Candida parapsilosis
+      count: 2
+    - value: Canis lupus familiaris
+      count: 2
+    - value: Human gammaherpesvirus 8
+      count: 2
+    - value: Ovis aries
+      count: 2
+    - value: Xenopus tropicalis
+      count: 2
+    - value: Escherichia coli
+      count: 1
+    - value: Human betaherpesvirus 6A
+      count: 1
+    - value: Human betaherpesvirus 6B
+      count: 1
+    - value: Human coronavirus OC43
+      count: 1
+    known_synonyms:
+      Homo sapiens:
+      - 人
+      - 人类
+      - human
+      Mus musculus:
+      - 小鼠
+      - 鼠
+      - mouse
+  source_database:
+    semantic_type: source_database
+    table: unified_samples
+    distinct_count: 8
+    null_pct: 0.0
+    top_values:
+    - value: geo
+      count: 342368
+    - value: ega
+      count: 253073
+    - value: ncbi
+      count: 217513
+    - value: ebi
+      count: 160135
+    - value: cellxgene
+      count: 33984
+    - value: psychad
+      count: 1494
+    - value: htan
+      count: 942
+    - value: hca
+      count: 143
+  sex:
+    semantic_type: sex
+    table: unified_samples
+    distinct_count: 97
+    null_pct: 65.1
+    top_values:
+    - value: male
+      count: 124167
+    - value: female
+      count: 123290
+    - value: '?'
+      count: 3998
+    - value: unknown
+      count: 3712
+    - value: not applicable
+      count: 2527
+    - value: not available
+      count: 2361
+    - value: not collected
+      count: 935
+    - value: pooled male and female
+      count: 754
+    - value: missing
+      count: 522
+    - value: not determined
+      count: 350
+    - value: not provided
+      count: 335
+    - value: mixed
+      count: 273
+    - value: unspecified
+      count: 138
+    - value: restricted access
+      count: 110
+    - value: male and female
+      count: 83
+    - value: female and male
+      count: 49
+    - value: 46,xx
+      count: 46
+    - value: 46,xy
+      count: 46
+    - value: 45,x
+      count: 36
+    - value: xy
+      count: 33
+    - value: male,female
+      count: 30
+    - value: '-'
+      count: 29
+    - value: xx
+      count: 22
+    - value: female erc000011
+      count: 21
+    - value: cis-female
+      count: 18
+    - value: mix
+      count: 18
+    - value: trans-male
+      count: 17
+    - value: female, male
+      count: 13
+    - value: gi4738(f), gi2935(m), gi4680(m), gi3128(m), prise 13(m)
+      count: 10
+    - value: male, female
+      count: 10
+    - value: tip200(f), gi4381 (f), gi4158 ( m), prise11 ( f)
+      count: 10
+    - value: hermaphrodite
+      count: 9
+    - value: mixed, male, and female
+      count: 9
+    - value: multiplexed
+      count: 9
+    - value: prise14 (male), 6929 (male), 6286 (male)
+      count: 9
+    - value: tip376(female), ibd 1464 (male), tip489 (male)
+      count: 9
+    - value: f / m
+      count: 8
+    - value: female, female, male
+      count: 8
+    - value: gi3052(f), prise5 (m), gi4069(m), prise 4(m), gi4448(f)
+      count: 8
+    - value: tip246(f), ibd3350(m), gi3152(m), prise12(m)
+      count: 8
+    - value: xxx
+      count: 7
+    - value: (see supp_cellhashing_barcodes.tsv)
+      count: 6
+    - value: 6274 (female) 6275 (female), 4980 (female)
+      count: 6
+    - value: male and male
+      count: 6
+    - value: male, male, male
+      count: 6
+    - value: tip 309 (m), tip 299(f), gi 4379(f), gi 4449 (m), gi 4051(f)
+      count: 6
+    - value: tip278 (f), ibd3947 (m), gi4059 (m),
+      count: 6
+    - value: women-men
+      count: 6
+    - value: male, female, male
+      count: 5
+    - value: male/female
+      count: 5
+    - value: xxy
+      count: 5
+    - value: female/male
+      count: 4
+    - value: m / m
+      count: 4
+    - value: male/male
+      count: 4
+    - value: tip278 (f), ibd3947 (m), gi4059 (m), prise1 (f)
+      count: 4
+    - value: tip332(f), ibd3778(m), gi4442(m) gi3662(f)
+      count: 4
+    - value: f / f
+      count: 3
+    - value: female, male, female, female, male, male, female, female, male, and female
+      count: 3
+    - value: mixed male and female
+      count: 3
+    - value: f; f; f; f
+      count: 2
+    - value: f; f; f; m
+      count: 2
+    - value: f; m; f; f
+      count: 2
+    - value: f; m; m; m
+      count: 2
+    - value: female and female
+      count: 2
+    - value: female, female
+      count: 2
+    - value: female/female
+      count: 2
+    - value: gi3052(f), gi4069(m), prise 4(m), gi4448(f)
+      count: 2
+    - value: m; m; f; m
+      count: 2
+    - value: m; m; m; f
+      count: 2
+    - value: male, male
+      count: 2
+    - value: mix, see plate layout_cw11
+      count: 2
+    - value: mix, see plate layout_cw12
+      count: 2
+    - value: mix, see plate layout_cw13
+      count: 2
+    - value: mix, see plate layout_cw14
+      count: 2
+    - value: mix, see plate layout_mw01
+      count: 2
+    - value: mix, see plate layout_mw02
+      count: 2
+    - value: mix, see plate layout_mw03
+      count: 2
+    - value: mix, see plate layout_mw04
+      count: 2
+    - value: mix, see plate layout_mw05
+      count: 2
+    - value: mix, see plate layout_mw09
+      count: 2
+    - value: mix, see plate layout_mw10
+      count: 2
+    - value: mix, see plate layout_mw11
+      count: 2
+    - value: mix, see plate layout_mw15
+      count: 2
+    - value: mix, see plate layout_mw16
+      count: 2
+    - value: mix, see plate layout_mw17
+      count: 2
+    - value: tip246(f), ibd3350(m)
+      count: 2
+    - value: tip332(f), ibd3778(m), gi3662(f)
+      count: 2
+    - value: unk
+      count: 2
+    - value: 2 female, 1 male
+      count: 1
+    - value: fem
+      count: 1
+    - value: fema
+      count: 1
+    - value: femal
+      count: 1
+    - value: female, male, and male
+      count: 1
+    - value: m/m
+      count: 1
+    - value: male / female
+      count: 1
+    - value: none
+      count: 1
+    - value: oy
+      count: 1
+tables:
+  dedup_candidates:
+    record_count: 100000
+    key_columns:
+    - pk
+    - entity_type
+    - entity_a_pk
+    - entity_a_id
+    - entity_a_database
+    - entity_b_pk
+    - entity_b_id
+    - entity_b_database
+    - match_method
+    - confidence_score
+    - match_evidence
+    - status
+    - resolved_by
+    - resolved_at
+    - resolution_notes
+    - created_at
+  entity_links:
+    record_count: 9966
+    key_columns:
+    - pk
+    - source_entity_type
+    - source_pk
+    - source_id
+    - source_database
+    - target_entity_type
+    - target_pk
+    - target_id
+    - target_database
+    - relationship_type
+    - confidence
+    - link_method
+    - link_evidence
+    - created_at
+  etl_run_log:
+    record_count: 16
+    key_columns:
+    - pk
+    - source_database
+    - phase
+    - status
+    - records_processed
+    - records_loaded
+    - records_skipped
+    - records_errored
+    - error_message
+    - started_at
+    - completed_at
+    - duration_seconds
+  id_mappings:
+    record_count: 1321320
+    key_columns:
+    - pk
+    - entity_type
+    - entity_pk
+    - id_type
+    - id_value
+    - id_source_database
+    - is_primary
+    - created_at
+  unified_celltypes:
+    record_count: 378029
+    key_columns:
+    - pk
+    - sample_pk
+    - cell_type_name
+    - cell_type_ontology_term_id
+    - source_database
+    - source_field
+  unified_projects:
+    record_count: 23123
+    key_columns:
+    - pk
+    - project_id
+    - project_id_type
+    - source_database
+    - title
+    - description
+    - organism
+    - pmid
+    - doi
+    - pmc_id
+    - publication_date
+    - journal
+    - citation_count
+    - contact_name
+    - contact_email
+    - submitter_organization
+    - sample_count
+    - total_cells
+    - data_availability
+    - access_url
+    - submission_date
+    - last_update_date
+    - raw_metadata
+    - etl_source_file
+    - etl_loaded_at
+  unified_samples:
+    record_count: 756579
+    key_columns:
+    - pk
+    - sample_id
+    - sample_id_type
+    - source_database
+    - series_pk
+    - series_id
+    - project_pk
+    - project_id
+    - organism
+    - tissue
+    - tissue_ontology_term_id
+    - tissue_general
+    - cell_type
+    - cell_type_ontology_term_id
+    - disease
+    - disease_ontology_term_id
+    - sex
+    - sex_ontology_term_id
+    - age
+    - age_unit
+    - development_stage
+    - development_stage_ontology_term_id
+    - ethnicity
+    - ethnicity_ontology_term_id
+    - individual_id
+    - sample_source_type
+    - is_primary_data
+    - suspension_type
+    - tissue_type
+    - n_cells
+    - n_cell_types
+    - expr_raw_sum_mean
+    - expr_raw_sum_min
+    - expr_raw_sum_max
+    - expr_nnz_mean
+    - biological_identity_hash
+    - raw_metadata
+    - etl_source_file
+    - etl_loaded_at
+  unified_series:
+    record_count: 15968
+    key_columns:
+    - pk
+    - series_id
+    - series_id_type
+    - source_database
+    - project_pk
+    - project_id
+    - title
+    - description
+    - organism
+    - assay
+    - assay_ontology_term_id
+    - suspension_type
+    - cell_count
+    - gene_count
+    - mean_genes_per_cell
+    - sample_count
+    - has_h5ad
+    - has_rds
+    - asset_h5ad_url
+    - asset_rds_url
+    - explorer_url
+    - citation_count
+    - citation_source
+    - published_at
+    - revised_at
+    - raw_metadata
+    - etl_source_file
+    - etl_loaded_at
+views:
+  v_sample_with_hierarchy:
+    description: Pre-joined samples+series+projects
+    columns:
+    - sample_pk
+    - sample_id
+    - sample_id_type
+    - sample_source
+    - organism
+    - tissue
+    - tissue_ontology_term_id
+    - tissue_general
+    - disease
+    - disease_ontology_term_id
+    - sex
+    - age
+    - age_unit
+    - development_stage
+    - ethnicity
+    - individual_id
+    - n_cells
+    - biological_identity_hash
+    - series_pk
+    - series_id
+    - series_title
+    - assay
+    - series_cell_count
+    - project_pk
+    - project_id
+    - project_title
+    - pmid
+    - doi
+    - citation_count
+    note: cell_type NOT available in this view
+    column_aliases:
+      pk: sample_pk
+      source_database: sample_source
+      title: project_title
+  # ── NEW STANDARDIZED FIELDS (2026-04-10) ──
+  tissue_system:
+    semantic_type: tissue_category
+    table: unified_samples
+    distinct_count: 17
+    null_pct: 51.9
+    description: |
+      Broad tissue system category (cleaned from tissue field). 17 values including
+      anatomical organ systems (blood_lymph, nervous, respiratory, …) plus two
+      sample-handling buckets (in_vitro, cell_line) that are not true tissue systems.
+      Use sample_type to distinguish in_vitro / cell_line / primary_tissue.
+    top_values:
+    - value: blood_lymph
+      count: 159400
+    - value: neoplasm
+      count: 94752
+    - value: in_vitro
+      count: 56489
+    - value: digestive
+      count: 49777
+    - value: cell_line
+      count: 44733
+    - value: reproductive
+      count: 44471
+    - value: nervous
+      count: 42580
+    - value: integumentary
+      count: 37549
+    - value: respiratory
+      count: 25048
+    - value: urinary
+      count: 19927
+    - value: musculoskeletal
+      count: 16497
+    - value: endocrine
+      count: 15979
+    - value: cardiovascular
+      count: 14747
+  disease_category:
+    semantic_type: disease_category
+    table: unified_samples
+    distinct_count: 19
+    null_pct: 61.1
+    description: Broad disease category (cleaned from disease field)
+    top_values:
+    - value: normal
+      count: 119056
+    - value: other
+      count: 99272
+    - value: neoplasm
+      count: 89971
+    - value: hematological
+      count: 28426
+    - value: experimental_label
+      count: 10059
+    - value: infectious
+      count: 9516
+    - value: neurological
+      count: 6837
+    - value: autoimmune
+      count: 6728
+    - value: metabolic
+      count: 6195
+    - value: respiratory
+      count: 4316
+    - value: cardiovascular
+      count: 2809
+  sample_type:
+    semantic_type: sample_type
+    table: unified_samples
+    distinct_count: 9
+    null_pct: 0.0
+    description: 'Type of biological sample: primary tissue, tumor, cell line, iPSC, organoid, etc.'
+    top_values:
+    - value: primary_tissue
+      count: 698980
+    - value: tumor
+      count: 137662
+    - value: unknown
+      count: 70539
+    - value: cell_line
+      count: 45982
+    - value: iPSC_derived
+      count: 22549
+    - value: PSC_derived
+      count: 13236
+    - value: in_vitro_other
+      count: 10315
+    - value: organoid
+      count: 8908
+    - value: xenograft
+      count: 1481
+  organism_common:
+    semantic_type: organism
+    table: unified_samples
+    distinct_count: 35
+    null_pct: 0.0
+    description: Common name for organism (human, mouse, etc.)
+    top_values:
+    - value: human
+      count: 943318
+    - value: mouse
+      count: 42718
+    - value: fruit fly
+      count: 13361
+    - value: zebrafish
+      count: 4718
+    - value: cynomolgus monkey
+      count: 1492
+    - value: gorilla
+      count: 934
+    - value: chimpanzee
+      count: 617
+    - value: rat
+      count: 504
+  sex_normalized:
+    semantic_type: sex
+    table: unified_samples
+    distinct_count: 4
+    null_pct: 55.4
+    description: Standardized sex value (female, male, mixed, unknown)
+    top_values:
+    - value: female
+      count: 235094
+    - value: male
+      count: 198431
+    - value: unknown
+      count: 15122
+    - value: mixed
+      count: 1399
+  # ── Tier-stratified standardised columns (2026-05-18) ──
+  tissue_standard_l1:
+    semantic_type: tissue_organ
+    table: unified_samples
+    distinct_count: 70
+    null_pct: 57.0
+    description: Organ-level tissue (clean tier). Use for broad tissue grouping / faceting. 70 values.
+  tissue_standard_leaf:
+    semantic_type: tissue_specific
+    table: unified_samples
+    distinct_count: 412
+    null_pct: 57.0
+    description: Specific tissue tier (clean). Use for drill-down. 412 values.
+  disease_standard_l1:
+    semantic_type: disease_family
+    table: unified_samples
+    distinct_count: 31
+    null_pct: 54.3
+    description: Disease-family tier (clean). Sits between disease_category (17 broad) and disease_standard (721 specific).
+  cell_type_lineage:
+    semantic_type: cell_type_lineage
+    table: unified_samples
+    distinct_count: 18
+    null_pct: 72.7
+    description: Broad cell-lineage category (clean). Use for cell-type faceting instead of cell_type_standard (which mixes lineage+specific).
+  age_numeric_min:
+    semantic_type: age_numeric
+    table: unified_samples
+    distinct_count: 976
+    null_pct: 86.7
+    description: Numeric lower bound of age (paired with age_numeric_max and age_unit_normalized). Use for age range queries.
+  age_unit_normalized:
+    semantic_type: age_unit
+    table: unified_samples
+    distinct_count: 6
+    null_pct: 85.2
+    description: 'Standard age unit: year, month, week, day, hour, embryonic-week.'
+  dev_stage_category:
+    semantic_type: dev_stage
+    table: unified_samples
+    distinct_count: 7
+    null_pct: 82.4
+    description: Developmental stage category (adult, pediatric, embryonic, fetal, neonate, …).
+  ancestry_category:
+    semantic_type: ancestry
+    table: unified_samples
+    distinct_count: 10
+    null_pct: 95.1
+    description: Ancestry category (sparse but clean). Use instead of raw ethnicity column.
+  primary_organism:
+    semantic_type: organism
+    table: unified_projects / unified_series
+    distinct_count: 46
+    null_pct: 23.0
+    description: |
+      Clean scalar organism on PROJECT and SERIES tables. The raw `organism` column
+      on these two tables is CORRUPTED (stores Python list-literal strings like
+      "['Homo sapiens', 'Mus musculus']"). Use primary_organism instead. On
+      unified_samples the raw `organism` column is clean — use it directly.
+id_patterns:
+- prefix: GSE
+  type: geo_project
+  table: unified_projects
+  field: project_id
+- prefix: GSM
+  type: geo_sample
+  table: unified_samples
+  field: sample_id
+- prefix: PRJNA
+  type: sra_project
+  table: unified_projects
+  field: project_id
+- prefix: SRP
+  type: sra_study
+  table: unified_series
+  field: series_id
+- prefix: SRS
+  type: sra_sample
+  table: unified_samples
+  field: sample_id
+- prefix: SAMN
+  type: biosample
+  table: unified_samples
+  field: sample_id
+- prefix: SAME
+  type: biosample
+  table: unified_samples
+  field: sample_id
+query_constraints:
+- Always add LIMIT (default 20, max 200)
+- Use LIKE '%term%' for text fields (tissue, disease, cell_type)
+- Use IN for enumerated fields (source_database, sex_normalized, organism, tissue_system, disease_category, sample_type, dev_stage_category, ancestry_category)
+- Parameterize all user values with ?
+- 'FTS5 tables available: fts_samples, fts_projects, fts_series'
+- Use v_sample_with_hierarchy view for joined queries (samples+series+projects)
+- cell_type is NOT available in v_sample_with_hierarchy — query unified_samples directly
+- 'In v_sample_with_hierarchy: pk→sample_pk, source_database→sample_source, title→project_title'
+- Do NOT combine tissue + tissue_general in same WHERE clause
+- 'Standardized fields available: tissue_standard, tissue_standard_l1, tissue_standard_leaf, tissue_system, disease_standard, disease_standard_l1, disease_category, cell_type_standard, cell_type_lineage, organism_normalized, organism_common, sex_normalized, sample_type, age_numeric_min, age_unit_normalized, dev_stage_category, ancestry_category'
+- 'For tissue: filter equality on tissue_standard (627 vals, indexed). For broad grouping/faceting use tissue_standard_l1 (70 organ-level vals) or tissue_system (17 categories). For specific drill-down use tissue_standard_leaf (412 vals).'
+- 'For disease: filter equality on disease_standard (721 vals). For broad grouping use disease_category (17 vals) or disease_standard_l1 (31 disease-family vals).'
+- 'For cell_type: filter on cell_type_standard (336 vals); for broad lineage grouping use cell_type_lineage (18 vals).'
+- 'Never group / facet on tissue_standard or cell_type_standard directly — they mix granularity tiers. Use the _l1 / _leaf / _lineage variants.'
+- 'On unified_projects and unified_series, the raw organism column is CORRUPTED (Python list-literal strings); use primary_organism instead. unified_samples.organism is clean.'
+- 'sample_type distinguishes: primary_tissue, tumor, cell_line, iPSC_derived, organoid, xenograft, PSC_derived, in_vitro_other, unknown (9 values, 100% coverage).'
+- 'organism_common provides common names: human, mouse, zebrafish, fruit fly (35 vals).'
+- 'For age range queries use the numeric pair (age_numeric_min, age_numeric_max) + age_unit_normalized, not the raw age column.'
+- 'For sex filtering use sex_normalized (female/male/mixed/unknown), not raw sex (97 dirty values).'
+overrides:
+  synonyms: {}
+  notes: {}
