@@ -1,0 +1,660 @@
+@import "tailwindcss";
+
+/* ═══════════════════════════════════════════════
+   Singligent — Design System v3.0 (Phase 27)
+   Inspired by: CellxGene, HCA, Linear, Vercel, Nature
+   Philosophy: Scientific precision, calm clarity
+   ═══════════════════════════════════════════════ */
+
+/* Tailwind v4 theme tokens — give us proper utility classes
+   (text-2xs, text-xs, text-sm…) instead of arbitrary `text-[12px]`. */
+@theme {
+  --color-accent: #1B6FA8;
+  --color-accent-hover: #155A8A;
+  --color-accent-subtle: #E6F0F8;
+  --color-accent-bg: #EFF6FB;
+  --color-accent-border: #BFD8EC;
+  /* Secondary brand hue (cyan) — pairs with the cobalt accent in gradients,
+     active states, and chart ramps so the UI isn't monochrome. */
+  --color-accent-2: #38BDF8;
+  --color-accent-strong: #1668A6;
+
+  --color-canvas: #FFFFFF;
+  --color-canvas-subtle: #F7F8FA;
+  --color-canvas-muted: #EEF1F4;
+
+  --color-ink: #0F172A;
+  --color-ink-muted: #475569;
+  /* Darkened from slate-400 (#94A3B8) to slate-500 (#64748B) so 11px
+   * text on white passes WCAG AA (4.5:1 contrast ratio). */
+  --color-ink-subtle: #64748B;
+
+  --color-line: #E2E6EB;
+  --color-line-strong: #CBD2DA;
+  --color-line-subtle: #EEF1F4;
+
+  --font-sans: "Inter", "Inter Tight", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Tight type scale — covers 95 %+ of UI text without arbitrary values. */
+  --text-2xs: 0.6875rem;       /* 11 px — chip / meta */
+  --text-2xs--line-height: 1.4;
+  --text-xs: 0.75rem;          /* 12 px — UI default */
+  --text-xs--line-height: 1.4;
+  --text-sm: 0.8125rem;        /* 13 px — body */
+  --text-sm--line-height: 1.5;
+  --text-base: 0.875rem;       /* 14 px — emphasised body */
+  --text-base--line-height: 1.55;
+  --text-lg: 1rem;             /* 16 px — page intro */
+  --text-lg--line-height: 1.5;
+  --text-xl: 1.125rem;         /* 18 px — page titles */
+  --text-xl--line-height: 1.4;
+  --text-2xl: 1.375rem;        /* 22 px — section heroes */
+  --text-2xl--line-height: 1.25;
+  --text-3xl: 1.75rem;         /* 28 px — landing big numbers */
+  --text-3xl--line-height: 1.15;
+  --text-4xl: 2.25rem;         /* 36 px — hero h1 (mobile) */
+  --text-4xl--line-height: 1.1;
+  --text-5xl: 2.75rem;         /* 44 px — display / inner-page hero register */
+  --text-5xl--line-height: 1.08;
+}
+
+:root {
+  /* ── Gray Scale (cool-tinted) ── */
+  --gray-50:  #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+  --gray-950: #020617;
+
+  /* ── Accent — calm "lab teal-blue" (Phase 27 tokens) ── */
+  --accent: #1B6FA8;
+  --accent-hover: #155A8A;
+  --accent-light: #3b82f6;
+  --accent-2: #38BDF8;
+  --accent-strong: #1668A6;
+  --accent-gradient: linear-gradient(135deg, #1B6FA8 0%, #2E8BC8 55%, #38BDF8 100%);
+  --accent-bg: #EFF6FB;
+  --accent-subtle: #E6F0F8;
+  --accent-border: #BFD8EC;
+
+  /* ── Semantic ── */
+  --success: #067647;
+  --warning: #B45309;
+  --error: #B42318;
+  --danger: #B42318;
+  --info: #1B6FA8;
+
+  /* ── Surfaces ── */
+  --bg: #ffffff;
+  --bg-page: #ffffff;
+  --bg-card: #ffffff;
+  --bg-subtle: #F7F8FA;
+  --bg-muted: #EEF1F4;
+  --bg-hover: var(--gray-50);
+
+  /* ── Navigation ── */
+  --nav-bg: #0F172A;
+  --nav-text: #E2E8F0;
+  --nav-text-active: #ffffff;
+  --nav-accent: #38BDF8;
+
+  /* ── Text ── */
+  --text: var(--gray-900);
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-tertiary: #94A3B8;
+  --text-link: var(--accent);
+
+  /* ── Border ── */
+  --border: #E2E6EB;
+  --border-strong: #CBD2DA;
+  --border-light: #EEF1F4;
+  --border-subtle: #EEF1F4;
+
+  /* ── Shadows (semantic elevation, tinted toward the brand blue for a softer,
+     more premium feel; believable multi-step scale so cards visibly float) ── */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05), 0 3px 8px -2px rgba(27, 86, 138, 0.07);
+  --shadow-md: 0 2px 4px -1px rgba(15, 23, 42, 0.05), 0 10px 20px -5px rgba(27, 86, 138, 0.12);
+  --shadow-lg: 0 4px 8px -2px rgba(15, 23, 42, 0.06), 0 20px 40px -10px rgba(27, 86, 138, 0.16);
+
+  /* ── Radius ── */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* ── Motion ── */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --duration-slow: 480ms;
+
+  /* ── Type ── */
+  --font-sans: "Inter", "Inter Tight", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* ── Base ── */
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-mono);
+}
+
+/* ── Synth markdown styling ── */
+.prose-discover {
+  --p-margin: 0.7em;
+}
+.prose-discover h1,
+.prose-discover h2,
+.prose-discover h3 {
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+  margin-top: 1em;
+  margin-bottom: 0.4em;
+}
+.prose-discover h2 { font-size: 1.05em; }
+.prose-discover h3 { font-size: 0.96em; }
+.prose-discover p { margin: var(--p-margin) 0; }
+.prose-discover ul { margin: var(--p-margin) 0; padding-left: 1.5em; list-style: disc; }
+.prose-discover li { margin: 0.2em 0; }
+.prose-discover code {
+  background: var(--bg-muted);
+  padding: 0.05em 0.35em;
+  border-radius: var(--radius-sm);
+  font-size: 0.92em;
+}
+.prose-discover a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.prose-discover table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5em 0 0.8em;
+  font-size: 0.9em;
+}
+.prose-discover th,
+.prose-discover td {
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+.prose-discover th { background: var(--bg-subtle); font-weight: 600; }
+.prose-discover blockquote {
+  border-left: 3px solid var(--accent-border);
+  margin: var(--p-margin) 0;
+  padding: 0.1em 0.8em;
+  color: var(--text-secondary);
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 4px; border: 2px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-400); border: 2px solid transparent; background-clip: padding-box; }
+* { scrollbar-width: thin; scrollbar-color: var(--gray-300) transparent; }
+
+/* ── Focus ── */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+/* ── Animation Keyframes ── */
+@keyframes fade-in { 
+  from { opacity: 0; } 
+  to { opacity: 1; } 
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.5); }
+}
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+/* ── Animation Utilities ── */
+.animate-fade-in { animation: fade-in var(--duration-base) var(--ease); }
+.animate-slide-up { animation: slide-up 300ms var(--ease); }
+.animate-slide-down { animation: slide-down 300ms var(--ease); }
+.animate-scale-in { animation: scale-in 300ms var(--ease); }
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+.animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
+
+/* Hero illustration: slow, elegant reveal (fade + gentle drift-in). */
+@keyframes hero-reveal {
+  from { opacity: 0; transform: scale(1.06); }
+  to   { opacity: 0.8; transform: scale(1); }
+}
+.hero-fade-in { animation: hero-reveal 1400ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Route entrance — a brief, calm reveal applied to keyed routed content. */
+@keyframes route-enter {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* `backwards` (not `both`): after the entrance the element reverts to its base
+   styles — NO lingering transform — so position:fixed descendants (mobile
+   drawers) still anchor to the viewport. */
+.route-enter { animation: route-enter var(--duration-slow) var(--ease-out-expo) backwards; }
+
+/* Reveal-on-scroll as PROGRESSIVE ENHANCEMENT. Content is visible by default;
+   the hidden/animate-in state applies ONLY once useReveal adds `reveal-on` to
+   <html> (i.e. JS confirmed it can manage reveals). So a JS error, a dead
+   observer, or a no-JS render can never leave content permanently invisible —
+   the hook also runs a document-capture scroll sweep + a safety timeout that
+   force-reveal everything. Stagger via per-item --reveal-delay. */
+[data-reveal] {
+  transition: opacity var(--duration-slow) var(--ease-out-expo),
+              transform var(--duration-slow) var(--ease-out-expo);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+html.reveal-on [data-reveal]:not([data-reveal="in"]) {
+  opacity: 0;
+  transform: translateY(14px);
+}
+[data-reveal="in"] { opacity: 1; transform: none; }
+/* Stagger utilities for reveal-on-scroll groups (apply alongside data-reveal). */
+.rd-1 { --reveal-delay: 70ms; }
+.rd-2 { --reveal-delay: 140ms; }
+.rd-3 { --reveal-delay: 210ms; }
+.rd-4 { --reveal-delay: 280ms; }
+
+/* Animation delays */
+.animation-delay-100 { animation-delay: 100ms; }
+.animation-delay-200 { animation-delay: 200ms; }
+.animation-delay-300 { animation-delay: 300ms; }
+.animation-delay-400 { animation-delay: 400ms; }
+.animation-delay-500 { animation-delay: 500ms; }
+
+/* ── Skeleton ── */
+.skeleton {
+  background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Card ── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--duration-base) var(--ease),
+              border-color var(--duration-base) var(--ease),
+              transform var(--duration-base) var(--ease);
+}
+
+.card-hover:hover {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--accent-border);
+  transform: translateY(-2px);
+}
+
+/* Shared inner-page header chrome — a faint brand wash + a gradient hairline
+   divider, so every page header reads in the same branded register (one notch
+   quieter than the hero). Apply `.page-header-band` to a <header>; children
+   paint above ::before (the wash) and the ::after hairline sits at the bottom. */
+.page-header-band { position: relative; }
+.page-header-band::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 6rem; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(27, 111, 168, 0.06), transparent);
+}
+.page-header-band::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; pointer-events: none;
+  background: linear-gradient(to right, rgba(27, 111, 168, 0.42), var(--line) 45%, transparent);
+}
+/* Lift real children above the absolutely-positioned wash (which would otherwise
+   paint over in-flow content), without needing per-page wrapper divs. */
+.page-header-band > * { position: relative; }
+
+/* ── Table ── */
+.thead-row {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--gray-50);
+  border-bottom: 2px solid var(--border);
+}
+
+/* ── Badge ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border-radius: 4px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.badge-blue   { background: #e0f0ff; color: #1a5490; }
+.badge-green  { background: #e0f5e8; color: #14713a; }
+.badge-amber  { background: #fef6d8; color: #8a5a0b; }
+.badge-purple { background: #eee8fd; color: #5320a6; }
+.badge-pink   { background: #fde8f0; color: #8e1a4a; }
+.badge-red    { background: #fee5e5; color: #8e1b1b; }
+.badge-orange { background: #fff0e0; color: #8a3a12; }
+.badge-teal   { background: #d0faf0; color: #0f5550; }
+.badge-gray   { background: var(--gray-100); color: var(--gray-600); }
+.badge-sky    { background: #e0f4fe; color: #0a5580; }
+.badge-indigo { background: #e8e0fd; color: #3b1fa6; }
+.badge-rose   { background: #fde8e8; color: #8e1a3a; }
+.badge-cyan   { background: #d0f5fa; color: #0a5570; }
+.badge-lime   { background: #e8f5d0; color: #3a5510; }
+.badge-fuchsia { background: #f5e0fa; color: #7a1a8e; }
+.badge-emerald { background: #d0f5e0; color: #0f5530; }
+.badge-violet { background: #ede8fd; color: #4a20a6; }
+.badge-yellow { background: #fef6d0; color: #8a6a0b; }
+
+/* ── Code ── */
+.code-block {
+  background: var(--gray-900);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  font-family: "SF Mono", "Monaco", "Consolas", "Liberation Mono", monospace;
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  overflow-x: auto;
+  color: #e5e7eb;
+  white-space: pre;
+}
+
+/* ── Button ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease);
+  border: none;
+  line-height: 1.25;
+}
+
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  background: var(--gray-900);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) { background: var(--gray-800); box-shadow: var(--shadow-sm); }
+
+.btn-accent {
+  background: var(--accent-gradient);
+  background-color: var(--accent);
+  color: white;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.btn-accent:hover:not(:disabled) {
+  filter: brightness(1.06) saturate(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+  background: white;
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover:not(:disabled) { background: var(--gray-50); border-color: var(--gray-300); }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 6px 10px;
+}
+
+.btn-ghost:hover { background: var(--gray-100); color: var(--text-primary); }
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) { background: #8c1814; box-shadow: var(--shadow-sm); }
+
+.btn-danger-ghost {
+  background: transparent;
+  color: var(--danger);
+  padding: 6px 10px;
+}
+
+.btn-danger-ghost:hover:not(:disabled) { background: #fef2f2; }
+
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+
+.btn-success:hover:not(:disabled) { background: #045d38; box-shadow: var(--shadow-sm); }
+
+/* ── Input ── */
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--duration-fast) var(--ease),
+              box-shadow var(--duration-fast) var(--ease);
+}
+
+.input::placeholder { color: var(--gray-400); }
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+/* ── Section Label ── */
+.section-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  /* slate-500: 4.85:1 against white, passes WCAG AA for small text. */
+  color: var(--color-ink-subtle);
+}
+
+/* ── Line Clamp ── */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Scrollbar Hide ── */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Snap Scroll ── */
+.snap-x {
+  scroll-snap-type: x mandatory;
+}
+
+.snap-start {
+  scroll-snap-align: start;
+}
+
+.snap-mandatory {
+  scroll-snap-type: x mandatory;
+}
+
+/* ── Backdrop Blur ── */
+.backdrop-blur-xl {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* ── Glass Effect ── */
+.glass {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+.glass-dark {
+  background: rgba(15, 23, 42, 0.8);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* ── Landing hero radial glows (replaces inline style) ── */
+.hero-glow {
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(56, 189, 248, 0.4), transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(30, 107, 184, 0.4), transparent 50%);
+}
+
+/* ═══════════════════════════════════════════════
+   Accessibility & mobile (Phase 41 — mobile polish)
+   ═══════════════════════════════════════════════ */
+
+/* ── Placeholder contrast ──
+   Bare <input placeholder> defaults to a faint UA color; pin it to slate-500
+   (#64748B ≈ 4.6:1 on white) so it passes WCAG AA without darkening the
+   muted aesthetic of non-essential surrounding text. (.input already sets its
+   own placeholder; this catches every other input/textarea on the site.) */
+::placeholder {
+  color: var(--gray-500);
+  opacity: 1; /* Firefox dims placeholders by default */
+}
+
+/* ── Reduced motion ──
+   Neutralize decorative keyframe animations (and looping/transform-based ones)
+   for users who ask the OS to minimise motion. We keep functionality intact:
+   anything that animated purely for delight collapses to its end state. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Never leave reveal-on-scroll content hidden for reduced-motion users. */
+  [data-reveal] { opacity: 1 !important; transform: none !important; }
+
+  .animate-float,
+  .animate-pulse-glow,
+  .animate-bounce-subtle,
+  .skeleton {
+    animation: none !important;
+  }
+}
+
+/* ── Touch tap targets ──
+   On coarse pointers (phones/tablets) the dense desktop controls fall below
+   the 44×44px minimum. Bump interactive controls up for touch only, leaving
+   the desktop density untouched. */
+@media (pointer: coarse) {
+  .btn {
+    min-height: 44px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .btn-ghost,
+  .btn-danger-ghost {
+    min-height: 44px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
+  /* Pagination number / nav buttons and other tappable affordances. */
+  .tap-target,
+  button[aria-label],
+  nav[aria-label] button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
