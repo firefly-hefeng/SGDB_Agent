@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <title>Singligent</title>
+  <path d="M16 3 L27.3 9.5 L27.3 22.5 L16 29 L4.7 22.5 L4.7 9.5 Z" stroke="#1B6FA8" stroke-width="2" stroke-linejoin="round"/>
+  <g stroke="#1B6FA8" stroke-opacity="0.42" stroke-width="1.3" stroke-linecap="round">
+    <line x1="16" y1="16" x2="16" y2="8.5"/>
+    <line x1="16" y1="16" x2="23.2" y2="12.8"/>
+    <line x1="16" y1="16" x2="21" y2="21.2"/>
+    <line x1="16" y1="16" x2="11" y2="21.2"/>
+    <line x1="16" y1="16" x2="8.8" y2="12.8"/>
+    <line x1="16" y1="8.5" x2="23.2" y2="12.8"/>
+    <line x1="23.2" y1="12.8" x2="21" y2="21.2"/>
+    <line x1="21" y1="21.2" x2="11" y2="21.2"/>
+    <line x1="11" y1="21.2" x2="8.8" y2="12.8"/>
+    <line x1="8.8" y1="12.8" x2="16" y2="8.5"/>
+  </g>
+  <circle cx="16" cy="8.5" r="1.6" fill="#1668A6"/>
+  <circle cx="23.2" cy="12.8" r="1.6" fill="#1668A6"/>
+  <circle cx="21" cy="21.2" r="1.6" fill="#1668A6"/>
+  <circle cx="11" cy="21.2" r="1.6" fill="#1668A6"/>
+  <circle cx="8.8" cy="12.8" r="1.6" fill="#1668A6"/>
+  <circle cx="16" cy="16" r="2.4" fill="#1B6FA8"/>
+</svg>
